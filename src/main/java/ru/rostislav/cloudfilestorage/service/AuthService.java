@@ -15,7 +15,7 @@ public class AuthService {
         return null;
     }
 
-    public void logout(UserRequest request) {
+    public void logout() {
 
     }
 }
