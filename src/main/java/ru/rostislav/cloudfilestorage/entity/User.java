@@ -18,13 +18,13 @@ public class User {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String login;
+    private String username;
 
     @Column(nullable = false)
     private String password;
 
-    public User(String login, String password) {
-        this.login = login;
+    public User(String username, String password) {
+        this.username = username;
         this.password = password;
     }
 }

@@ -1,4 +1,4 @@
-package ru.rostislav.cloudfilestorage.dto;
+package ru.rostislav.cloudfilestorage.dto.resource;
 
 public record ResourceDTO(
         String path,
