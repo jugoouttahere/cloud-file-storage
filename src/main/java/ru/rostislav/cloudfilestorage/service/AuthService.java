@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.rostislav.cloudfilestorage.dto.auth.UserRequest;
 import ru.rostislav.cloudfilestorage.dto.auth.UserResponse;
 import ru.rostislav.cloudfilestorage.entity.User;
+import ru.rostislav.cloudfilestorage.exception.UserAlreadyExistsException;
 import ru.rostislav.cloudfilestorage.mapper.UserMapper;
 import ru.rostislav.cloudfilestorage.repository.UserRepository;
 
@@ -19,7 +20,7 @@ public class AuthService {
 
     public UserResponse register(UserRequest request) {
         if (userRepository.existsByUsername(request.username())) {
-            throw new IllegalArgumentException("User already exist");
+            throw new UserAlreadyExistsException(request.username());
         }
         String encodedPassword = passwordEncoder.encode(request.password());
         User user = new User(request.username(), encodedPassword);
