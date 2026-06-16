@@ -1,5 +1,6 @@
 package ru.rostislav.cloudfilestorage.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/sign-up")
-    public ResponseEntity<UserResponse> register(@RequestBody UserRequest request) {
+    public ResponseEntity<UserResponse> register(@Valid @RequestBody UserRequest request) {
         UserResponse registeredUser = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(registeredUser);
