@@ -5,6 +5,6 @@
 CREATE TABLE users
 (
     id       BIGSERIAL PRIMARY KEY,
-    username VARCHAR(128) UNIQUE NOT NULL,
-    password VARCHAR(256)        NOT NULL
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(100)        NOT NULL
 );
