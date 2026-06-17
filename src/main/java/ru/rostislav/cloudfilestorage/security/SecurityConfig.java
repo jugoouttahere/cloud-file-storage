@@ -1,4 +1,4 @@
-package ru.rostislav.cloudfilestorage.config;
+package ru.rostislav.cloudfilestorage.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
