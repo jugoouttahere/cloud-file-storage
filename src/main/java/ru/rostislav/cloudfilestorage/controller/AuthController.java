@@ -22,7 +22,16 @@ public class AuthController {
     @PostMapping("/sign-up")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody UserRequest userRequest) {
         UserResponse registeredUser = authService.register(userRequest);
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
                 .body(registeredUser);
+    }
+
+    @PostMapping("/sign-in")
+    public ResponseEntity<UserResponse> login(@Valid @RequestBody UserRequest userRequest) {
+        UserResponse loggedUser = authService.login(userRequest);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(loggedUser);
     }
 }
