@@ -1,5 +1,7 @@
 package ru.rostislav.cloudfilestorage.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,8 +30,12 @@ public class AuthController {
     }
 
     @PostMapping("/sign-in")
-    public ResponseEntity<UserResponse> login(@Valid @RequestBody UserRequest userRequest) {
-        UserResponse loggedUser = authService.login(userRequest);
+    public ResponseEntity<UserResponse> login(
+            @Valid @RequestBody UserRequest userRequest,
+            HttpServletRequest httpServletRequest,
+            HttpServletResponse httpServletResponse
+    ) {
+        UserResponse loggedUser = authService.login(userRequest, httpServletRequest, httpServletResponse);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(loggedUser);

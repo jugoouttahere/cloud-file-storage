@@ -1,11 +1,16 @@
 package ru.rostislav.cloudfilestorage.service;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 import ru.rostislav.cloudfilestorage.dto.auth.UserRequest;
 import ru.rostislav.cloudfilestorage.dto.auth.UserResponse;
@@ -23,6 +28,7 @@ public class AuthService {
     private final UserMapper userMapper;
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
+    private final SecurityContextRepository securityContextRepository;
 
     public UserResponse register(UserRequest request) {
         if (userRepository.existsByUsername(request.username())) {
@@ -34,14 +40,18 @@ public class AuthService {
         return userMapper.toResponse(savedUser);
     }
 
-    public UserResponse login(UserRequest request) {
+    public UserResponse login(UserRequest request, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.username(),
-                            request.password()
-                    )
-            );
+                    new UsernamePasswordAuthenticationToken(request.username(), request.password()));
+
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+
+            SecurityContextHolder.setContext(context);
+
+            securityContextRepository.saveContext(context, httpServletRequest, httpServletResponse);
+
             return new UserResponse(authentication.getName());
         } catch (AuthenticationException e) {
             throw new InvalidCredentialsException();
