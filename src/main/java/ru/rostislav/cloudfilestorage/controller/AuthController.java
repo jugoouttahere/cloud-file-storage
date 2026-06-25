@@ -6,10 +6,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.web.bind.annotation.*;
 import ru.rostislav.cloudfilestorage.dto.auth.UserRequest;
 import ru.rostislav.cloudfilestorage.dto.auth.UserResponse;
 import ru.rostislav.cloudfilestorage.service.AuthService;
@@ -20,6 +21,7 @@ import ru.rostislav.cloudfilestorage.service.AuthService;
 public class AuthController {
 
     private final AuthService authService;
+    private final SecurityContextRepository securityContextRepository;
 
     @PostMapping("/sign-up")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody UserRequest userRequest) {
@@ -32,10 +34,24 @@ public class AuthController {
     @PostMapping("/sign-in")
     public ResponseEntity<UserResponse> login(
             @Valid @RequestBody UserRequest userRequest,
-            HttpServletRequest httpServletRequest,
-            HttpServletResponse httpServletResponse
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse
     ) {
-        UserResponse loggedUser = authService.login(userRequest, httpServletRequest, httpServletResponse);
+        Authentication authentication = authService.authenticate(userRequest);
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+
+        SecurityContextHolder.setContext(context);
+
+        securityContextRepository.saveContext(
+                context,
+                httpRequest,
+                httpResponse
+        );
+
+        UserResponse loggedUser = new UserResponse(authentication.getName());
+
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(loggedUser);
