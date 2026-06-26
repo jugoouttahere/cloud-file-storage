@@ -1,7 +1,6 @@
 services:
   postgres:
     image: postgres:17
-    container_name: cloud-storage-postgres
     environment:
       POSTGRES_DB: cloud_storage
       POSTGRES_USER: postgres

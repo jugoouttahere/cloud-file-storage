@@ -39,6 +39,8 @@ public class AuthController {
     ) {
         Authentication authentication = authService.authenticate(userRequest);
 
+        httpRequest.changeSessionId();
+
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
 
