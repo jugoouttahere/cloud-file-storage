@@ -42,8 +42,4 @@ public class AuthService {
             throw new InvalidCredentialsException();
         }
     }
-
-    public void logout() {
-
-    }
 }
