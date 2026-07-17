@@ -40,6 +40,8 @@ public class AuthController {
     ) {
         Authentication authentication = authService.authenticate(userRequest);
 
+        //TODO Remove by add AuthenticationFilter/UsernamePasswordAuthenticationFilter/basic Spring Security flow
+        httpRequest.getSession();
         httpRequest.changeSessionId();
 
         SecurityContext context = SecurityContextHolder.createEmptyContext();
