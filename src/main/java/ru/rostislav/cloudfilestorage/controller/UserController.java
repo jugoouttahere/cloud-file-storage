@@ -11,13 +11,13 @@ import ru.rostislav.cloudfilestorage.dto.auth.UserResponse;
 import ru.rostislav.cloudfilestorage.service.UserService;
 
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/api/user")
 @RestController
 public class UserController {
 
     private final UserService userService;
 
-    @GetMapping("/user/me")
+    @GetMapping("/me")
     public ResponseEntity<UserResponse> currentUser(Authentication authentication) {
         UserResponse currentUser = userService.getCurrentUser(authentication);
         return ResponseEntity
