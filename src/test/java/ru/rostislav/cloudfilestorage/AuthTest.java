@@ -1,12 +1,9 @@
 package ru.rostislav.cloudfilestorage;
 
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -17,7 +14,8 @@ import ru.rostislav.cloudfilestorage.repository.UserRepository;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class AuthTest extends IntegrationTest {
 
@@ -79,15 +77,15 @@ class AuthTest extends IntegrationTest {
         assertNotNull(session);
 
         mockMvc.perform(
-                get("/api/user/me")
-                        .session(session)
+                        get("/api/user/me")
+                                .session(session)
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("TestUsername"));
 
         mockMvc.perform(
-                post("/api/auth/sign-out")
-                        .session(session)
+                        post("/api/auth/sign-out")
+                                .session(session)
                 )
                 .andExpect(status().isNoContent());
 
