@@ -1,13 +1,17 @@
 package ru.rostislav.cloudfilestorage;
 
-import io.minio.BucketExistsArgs;
-import io.minio.MakeBucketArgs;
-import io.minio.MinioClient;
+import io.minio.*;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MinioTest extends IntegrationTest {
@@ -36,5 +40,33 @@ public class MinioTest extends IntegrationTest {
         assertTrue(minioClient.bucketExists(BucketExistsArgs.builder()
                 .bucket("cloud-storage")
                 .build()));
+    }
+
+    @SneakyThrows
+    @Test
+    void shouldCreateFile() {
+        String expected = "Hello MinIO";
+        byte[] bytes = expected.getBytes(StandardCharsets.UTF_8);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+
+        ObjectWriteResponse objectWriteResponse = minioClient.putObject(
+                PutObjectArgs.builder()
+                        .bucket("cloud-storage")
+                        .object("hello.txt")
+                        .stream(inputStream, bytes.length, -1)
+                        .contentType("text/plain")
+                        .build()
+        );
+
+        GetObjectResponse getObjectResponse = minioClient.getObject(
+                GetObjectArgs.builder()
+                        .bucket("cloud-storage")
+                        .object("hello.txt")
+                        .build()
+        );
+
+        String actual = new String(getObjectResponse.readAllBytes(), StandardCharsets.UTF_8);
+
+        assertEquals(expected, actual);
     }
 }
