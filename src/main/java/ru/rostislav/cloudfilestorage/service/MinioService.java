@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.rostislav.cloudfilestorage.util.MinioProperties;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 @RequiredArgsConstructor
@@ -31,6 +32,21 @@ public class MinioService {
                                 -1
                         )
                         .contentType(file.getContentType())
+                        .build()
+        );
+    }
+
+    @SneakyThrows
+    public void putEmptyObject(String objectKey) {
+        minioClient.putObject(
+                PutObjectArgs.builder()
+                        .bucket(properties.getBucket())
+                        .object(objectKey)
+                        .stream(
+                                new ByteArrayInputStream(new byte[0]),
+                                0,
+                                -1
+                        )
                         .build()
         );
     }
