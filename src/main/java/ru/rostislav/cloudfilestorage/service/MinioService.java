@@ -4,9 +4,9 @@ import io.minio.*;
 import io.minio.errors.ErrorResponseException;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import ru.rostislav.cloudfilestorage.exception.minio.*;
 import ru.rostislav.cloudfilestorage.util.MinioProperties;
 
 import java.io.ByteArrayInputStream;
@@ -20,83 +20,100 @@ public class MinioService {
 
     private final MinioProperties properties;
 
-    @SneakyThrows
     public void putObject(MultipartFile file, String objectKey) {
-        minioClient.putObject(
-                PutObjectArgs.builder()
-                        .bucket(properties.getBucket())
-                        .object(objectKey)
-                        .stream(
-                                file.getInputStream(),
-                                file.getSize(),
-                                -1
-                        )
-                        .contentType(file.getContentType())
-                        .build()
-        );
+        try {
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket(properties.getBucket())
+                            .object(objectKey)
+                            .stream(
+                                    file.getInputStream(),
+                                    file.getSize(),
+                                    -1
+                            )
+                            .contentType(file.getContentType())
+                            .build()
+            );
+        } catch (Exception e) {
+            throw new PutObjectException(objectKey, e);
+        }
     }
 
-    @SneakyThrows
     public void putEmptyObject(String objectKey) {
-        minioClient.putObject(
-                PutObjectArgs.builder()
-                        .bucket(properties.getBucket())
-                        .object(objectKey)
-                        .stream(
-                                new ByteArrayInputStream(new byte[0]),
-                                0,
-                                -1
-                        )
-                        .build()
-        );
+        try {
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket(properties.getBucket())
+                            .object(objectKey)
+                            .stream(
+                                    new ByteArrayInputStream(new byte[0]),
+                                    0,
+                                    -1
+                            )
+                            .build()
+            );
+        } catch (Exception e) {
+            throw new PutObjectException(objectKey, e);
+        }
     }
 
-    @SneakyThrows
     public InputStream getObject(String objectKey) {
-        return minioClient.getObject(
-                GetObjectArgs.builder()
-                        .bucket(properties.getBucket())
-                        .object(objectKey)
-                        .build()
-        );
+        try {
+            return minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(properties.getBucket())
+                            .object(objectKey)
+                            .build()
+            );
+        } catch (Exception e) {
+            throw new GetObjectException(objectKey, e);
+        }
     }
 
-    @SneakyThrows
     public void removeObject(String objectKey) {
-        minioClient.removeObject(
-                RemoveObjectArgs.builder()
-                        .bucket(properties.getBucket())
-                        .object(objectKey)
-                        .build()
-        );
+        try {
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(properties.getBucket())
+                            .object(objectKey)
+                            .build()
+            );
+        } catch (Exception e) {
+            throw new RemoveObjectException(objectKey, e);
+        }
     }
 
-    @SneakyThrows
     public void copyObject(String source, String dest) {
-        minioClient.copyObject(
-                CopyObjectArgs.builder()
-                        .bucket(properties.getBucket())
-                        .object(dest)
-                        .source(
-                                CopySource.builder()
-                                        .bucket(properties.getBucket())
-                                        .object(source)
-                                        .build())
-                        .build()
-        );
+        try {
+            minioClient.copyObject(
+                    CopyObjectArgs.builder()
+                            .bucket(properties.getBucket())
+                            .object(dest)
+                            .source(
+                                    CopySource.builder()
+                                            .bucket(properties.getBucket())
+                                            .object(source)
+                                            .build())
+                            .build()
+            );
+        } catch (Exception e) {
+            throw new CopyObjectException(dest, e);
+        }
     }
 
-    @SneakyThrows
     public StatObjectResponse getObjectStat(String objectKey) {
-        return minioClient.statObject(
-                StatObjectArgs.builder()
-                        .bucket(properties.getBucket())
-                        .object(objectKey)
-                        .build()
-        );
+        try {
+            return minioClient.statObject(
+                    StatObjectArgs.builder()
+                            .bucket(properties.getBucket())
+                            .object(objectKey)
+                            .build()
+            );
+        } catch (Exception e) {
+            throw new StatObjectException(objectKey, e);
+        }
     }
 
-    @SneakyThrows
     public boolean isObjectExist(String objectKey) {
         try {
             minioClient.statObject(
@@ -111,6 +128,8 @@ public class MinioService {
                 return false;
             }
             throw new RuntimeException("Failed to check object existence", e);
+        } catch (Exception e) {
+            throw new StatObjectException(objectKey, e);
         }
     }
 

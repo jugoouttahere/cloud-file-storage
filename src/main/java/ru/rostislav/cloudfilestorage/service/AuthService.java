@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 import ru.rostislav.cloudfilestorage.dto.auth.UserRequest;
 import ru.rostislav.cloudfilestorage.dto.auth.UserResponse;
 import ru.rostislav.cloudfilestorage.entity.User;
-import ru.rostislav.cloudfilestorage.exception.InvalidCredentialsException;
-import ru.rostislav.cloudfilestorage.exception.UserAlreadyExistsException;
+import ru.rostislav.cloudfilestorage.exception.auth.InvalidCredentialsException;
+import ru.rostislav.cloudfilestorage.exception.auth.UserAlreadyExistsException;
 import ru.rostislav.cloudfilestorage.mapper.UserMapper;
 import ru.rostislav.cloudfilestorage.repository.UserRepository;
 

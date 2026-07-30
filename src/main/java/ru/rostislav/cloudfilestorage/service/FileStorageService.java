@@ -3,9 +3,12 @@ package ru.rostislav.cloudfilestorage.service;
 import io.minio.Result;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import ru.rostislav.cloudfilestorage.exception.minio.EmptyFileException;
+import ru.rostislav.cloudfilestorage.exception.minio.GetObjectException;
+import ru.rostislav.cloudfilestorage.exception.minio.ObjectAlreadyExistsException;
+import ru.rostislav.cloudfilestorage.exception.minio.ObjectNotFoundException;
 
 import java.io.InputStream;
 
@@ -17,15 +20,16 @@ public class FileStorageService {
 
     public void uploadFile(MultipartFile file, String objectKey) {
         if (file.isEmpty()) {
-            throw new RuntimeException(String.format("File:%s is empty.", objectKey));
+            throw new EmptyFileException(objectKey);
         }
         checkObjectNotExist(objectKey);
         minioService.putObject(file, objectKey);
     }
 
-    public void createEmptyFolder(String folderName) {
-        checkObjectNotExist(folderName);
-        minioService.putEmptyObject(folderName);
+    public void createEmptyFolder(String folderKey) {
+        String normalizedFolderKey = normalizeFolder(folderKey);
+        checkObjectNotExist(normalizedFolderKey);
+        minioService.putEmptyObject(normalizedFolderKey);
     }
 
     public void renameFile(String oldObjectKey, String newObjectKey) {
@@ -35,13 +39,19 @@ public class FileStorageService {
         minioService.removeObject(oldObjectKey);
     }
 
-    @SneakyThrows
-    public void renameFolder(String oldFolderName, String newFolderName) {
-        Iterable<Result<Item>> oldFileList = minioService.getObjectList(oldFolderName);
-        for (Result<Item> file : oldFileList) {
-            String oldObjectKey = file.get().objectName();
-            String relative = oldObjectKey.substring(oldFolderName.length());
-            String newObjectKey = newFolderName + relative;
+    public void renameFolder(String oldFolderKey, String newFolderKey) {
+        String normalizedOldFolderKey = normalizeFolder(oldFolderKey);
+        String normalizedNewFolderKey = normalizeFolder(newFolderKey);
+        Iterable<Result<Item>> oldObjectList = minioService.getObjectList(normalizedOldFolderKey);
+        for (Result<Item> object : oldObjectList) {
+            String oldObjectKey = null;
+            try {
+                oldObjectKey = object.get().objectName();
+            } catch (Exception e) {
+                throw new GetObjectException("listing objects in folder: " + oldFolderKey, e);
+            }
+            String relative = oldObjectKey.substring(normalizedOldFolderKey.length());
+            String newObjectKey = normalizedNewFolderKey + relative;
             minioService.copyObject(oldObjectKey, newObjectKey);
             minioService.removeObject(oldObjectKey);
         }
@@ -67,13 +77,17 @@ public class FileStorageService {
 
     private void checkObjectNotExist(String objectKey) {
         if (minioService.isObjectExist(objectKey)) {
-            throw new RuntimeException(String.format("File with name:%s already exist.", objectKey));
+            throw new ObjectAlreadyExistsException(objectKey);
         }
     }
 
     private void checkObjectExist(String oldObjectKey) {
         if (!minioService.isObjectExist(oldObjectKey)) {
-            throw new RuntimeException(String.format("File with name:%s not exist.", oldObjectKey));
+            throw new ObjectNotFoundException(oldObjectKey);
         }
+    }
+
+    private String normalizeFolder(String folder) {
+        return folder.endsWith("/") ? folder : folder + "/";
     }
 }

@@ -1,4 +1,4 @@
-package ru.rostislav.cloudfilestorage.exception;
+package ru.rostislav.cloudfilestorage.exception.auth;
 
 public class InvalidCredentialsException extends RuntimeException {
     public InvalidCredentialsException() {

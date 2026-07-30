@@ -6,13 +6,12 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
+import ru.rostislav.cloudfilestorage.exception.minio.StatObjectException;
 import ru.rostislav.cloudfilestorage.service.FileStorageService;
-import ru.rostislav.cloudfilestorage.service.MinioService;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -174,12 +173,12 @@ public class FileStorageServiceTest extends IntegrationTest {
     }
 
     @SneakyThrows
-    private boolean isObjectExist(String objectName) {
+    private boolean isObjectExist(String objectKey) {
         try {
             minioClient.statObject(
                     StatObjectArgs.builder()
                             .bucket("cloud-storage")
-                            .object(objectName)
+                            .object(objectKey)
                             .build()
             );
             return true;
@@ -187,7 +186,7 @@ public class FileStorageServiceTest extends IntegrationTest {
             if (e.errorResponse().code().equals("NoSuchKey")) {
                 return false;
             }
-            throw new RuntimeException("Failed to check object existence", e);
+            throw new StatObjectException(objectKey, e);
         }
     }
 }

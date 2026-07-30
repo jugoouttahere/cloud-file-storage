@@ -6,6 +6,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.rostislav.cloudfilestorage.dto.ErrorResponse;
+import ru.rostislav.cloudfilestorage.exception.auth.InvalidCredentialsException;
+import ru.rostislav.cloudfilestorage.exception.auth.UserAlreadyExistsException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
