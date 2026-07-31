@@ -2,9 +2,7 @@ package ru.rostislav.cloudfilestorage;
 
 import io.minio.*;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -12,25 +10,7 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class MinioTest extends IntegrationTest {
-
-    @Autowired
-    private MinioClient minioClient;
-
-    @SneakyThrows
-    @BeforeEach
-    void setUp() {
-        if (!minioClient.bucketExists(BucketExistsArgs.builder()
-                .bucket("cloud-storage")
-                .build())) {
-
-            minioClient.makeBucket(
-                    MakeBucketArgs.builder()
-                            .bucket("cloud-storage")
-                            .build()
-            );
-        }
-    }
+public class MinioTest extends MinioIntegrationTest {
 
     @SneakyThrows
     @Test
@@ -47,14 +27,7 @@ public class MinioTest extends IntegrationTest {
         byte[] bytes = expected.getBytes(StandardCharsets.UTF_8);
         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
-        ObjectWriteResponse objectWriteResponse = minioClient.putObject(
-                PutObjectArgs.builder()
-                        .bucket("cloud-storage")
-                        .object("hello.txt")
-                        .stream(inputStream, bytes.length, -1)
-                        .contentType("text/plain")
-                        .build()
-        );
+        putObject("hello.txt", expected);
 
         GetObjectResponse getObjectResponse = minioClient.getObject(
                 GetObjectArgs.builder()

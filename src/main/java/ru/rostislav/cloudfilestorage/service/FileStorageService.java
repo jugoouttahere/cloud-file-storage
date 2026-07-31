@@ -18,7 +18,7 @@ public class FileStorageService {
 
     private final MinioService minioService;
 
-    public void uploadFile(MultipartFile file, String objectKey) {
+    public void uploadFile(String objectKey, MultipartFile file) {
         if (file.isEmpty()) {
             throw new EmptyFileException(objectKey);
         }

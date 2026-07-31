@@ -1,24 +1,21 @@
 package ru.rostislav.cloudfilestorage;
 
 import io.minio.*;
-import io.minio.errors.ErrorResponseException;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
-import ru.rostislav.cloudfilestorage.exception.minio.StatObjectException;
+import ru.rostislav.cloudfilestorage.exception.minio.EmptyFileException;
+import ru.rostislav.cloudfilestorage.exception.minio.ObjectAlreadyExistsException;
+import ru.rostislav.cloudfilestorage.exception.minio.ObjectNotFoundException;
 import ru.rostislav.cloudfilestorage.service.FileStorageService;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class FileStorageServiceTest extends IntegrationTest {
-
-    @Autowired
-    private MinioClient minioClient;
+public class FileStorageServiceTest extends MinioIntegrationTest {
 
     @Autowired
     private FileStorageService fileStorageService;
@@ -27,17 +24,8 @@ public class FileStorageServiceTest extends IntegrationTest {
     @Test
     void shouldRenameFile() {
         String text = "Hello MinIO";
-        byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
-        minioClient.putObject(
-                PutObjectArgs.builder()
-                        .bucket("cloud-storage")
-                        .object("hello.txt")
-                        .stream(inputStream, bytes.length, -1)
-                        .contentType("text/plain")
-                        .build()
-        );
+        putObject("hello.txt", text);
 
         fileStorageService.renameFile("hello.txt", "new-hello.txt");
 
@@ -58,27 +46,9 @@ public class FileStorageServiceTest extends IntegrationTest {
     @SneakyThrows
     @Test
     void shouldRenameFolder() {
-        minioClient.putObject(
-                PutObjectArgs.builder()
-                        .bucket("cloud-storage")
-                        .object("old/file1.txt")
-                        .stream(new ByteArrayInputStream(new byte[0]), 0, -1)
-                        .build()
-        );
-        minioClient.putObject(
-                PutObjectArgs.builder()
-                        .bucket("cloud-storage")
-                        .object("old/file2.txt")
-                        .stream(new ByteArrayInputStream(new byte[0]), 0, -1)
-                        .build()
-        );
-        minioClient.putObject(
-                PutObjectArgs.builder()
-                        .bucket("cloud-storage")
-                        .object("old/inner/file3.txt")
-                        .stream(new ByteArrayInputStream(new byte[0]), 0, -1)
-                        .build()
-        );
+        putObject("old/file1.txt", "");
+        putObject("old/file2.txt", "");
+        putObject("old/inner/file3.txt", "");
 
         fileStorageService.renameFolder("old/", "new/");
 
@@ -93,13 +63,7 @@ public class FileStorageServiceTest extends IntegrationTest {
     @SneakyThrows
     @Test
     void shouldDeleteFile() {
-        minioClient.putObject(
-                PutObjectArgs.builder()
-                        .bucket("cloud-storage")
-                        .object("hello.txt")
-                        .stream(new ByteArrayInputStream(new byte[0]), 0, -1)
-                        .build()
-        );
+        putObject("hello.txt", "");
 
         fileStorageService.deleteFile("hello.txt");
 
@@ -118,7 +82,7 @@ public class FileStorageServiceTest extends IntegrationTest {
                 expected.getBytes(StandardCharsets.UTF_8)
         );
 
-        fileStorageService.uploadFile(file, "hello.txt");
+        fileStorageService.uploadFile("hello.txt", file);
 
         GetObjectResponse getObjectResponse = minioClient.getObject(
                 GetObjectArgs.builder()
@@ -137,17 +101,8 @@ public class FileStorageServiceTest extends IntegrationTest {
     @Test
     void shouldDownloadFile() {
         String expected = "Hello MinIO";
-        byte[] bytes = expected.getBytes(StandardCharsets.UTF_8);
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
-        minioClient.putObject(
-                PutObjectArgs.builder()
-                        .bucket("cloud-storage")
-                        .object("hello.txt")
-                        .stream(inputStream, bytes.length, -1)
-                        .contentType("text/plain")
-                        .build()
-        );
+        putObject("hello.txt", expected);
 
         String actual;
         try (InputStream downloadFile = fileStorageService.downloadFile("hello.txt")) {
@@ -173,20 +128,85 @@ public class FileStorageServiceTest extends IntegrationTest {
     }
 
     @SneakyThrows
-    private boolean isObjectExist(String objectKey) {
-        try {
-            minioClient.statObject(
-                    StatObjectArgs.builder()
-                            .bucket("cloud-storage")
-                            .object(objectKey)
-                            .build()
-            );
-            return true;
-        } catch (ErrorResponseException e) {
-            if (e.errorResponse().code().equals("NoSuchKey")) {
-                return false;
-            }
-            throw new StatObjectException(objectKey, e);
-        }
+    @Test
+    void shouldThrowWhenUploadingExistingFile() {
+        putObject("hello.txt", "");
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "hello.txt",
+                "text/plain",
+                "Hello".getBytes(StandardCharsets.UTF_8)
+        );
+
+        assertThrows(
+                ObjectAlreadyExistsException.class,
+                () -> fileStorageService.uploadFile("hello.txt", file)
+        );
+    }
+
+    @SneakyThrows
+    @Test
+    void shouldThrowWhenUploadingEmptyFile() {
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "hello.txt",
+                "text/plain",
+                new byte[0]
+        );
+
+        assertThrows(
+                EmptyFileException.class,
+                () -> fileStorageService.uploadFile("hello.txt", file)
+        );
+    }
+
+    @SneakyThrows
+    @Test
+    void shouldThrowWhenDownloadingMissingFile() {
+        assertThrows(
+                ObjectNotFoundException.class,
+                () -> fileStorageService.downloadFile("hello.txt")
+        );
+    }
+
+    @Test
+    void shouldThrowWhenDeletingMissingFile() {
+        assertThrows(
+                ObjectNotFoundException.class,
+                () -> fileStorageService.deleteFile("hello.txt")
+        );
+    }
+
+    @Test
+    void shouldThrowWhenRenamingMissingFile() {
+        assertThrows(
+                ObjectNotFoundException.class,
+                () -> fileStorageService.renameFile("hello.txt", "new-hello.txt")
+        );
+    }
+
+    @SneakyThrows
+    @Test
+    void shouldThrowWhenRenamingToExistingFile() {
+        String text = "Hello MinIO";
+
+        putObject("hello.txt", text);
+
+        assertThrows(
+                ObjectAlreadyExistsException.class,
+                () -> fileStorageService.renameFile("hello.txt", "hello.txt")
+        );
+    }
+
+    @SneakyThrows
+    @Test
+    void shouldThrowWhenCreatingExistingFolder() {
+        putObject("folder/", "");
+
+        assertThrows(
+                ObjectAlreadyExistsException.class,
+                () -> fileStorageService.createEmptyFolder("folder/")
+        );
     }
 }
