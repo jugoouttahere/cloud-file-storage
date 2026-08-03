@@ -1,10 +1,13 @@
 package ru.rostislav.cloudfilestorage.service;
 
 import io.minio.Result;
+import io.minio.StatObjectResponse;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import ru.rostislav.cloudfilestorage.dto.resource.ResourceInfo;
+import ru.rostislav.cloudfilestorage.dto.resource.ResourceType;
 import ru.rostislav.cloudfilestorage.exception.minio.EmptyFileException;
 import ru.rostislav.cloudfilestorage.exception.minio.GetObjectException;
 import ru.rostislav.cloudfilestorage.exception.minio.ObjectAlreadyExistsException;
@@ -73,6 +76,26 @@ public class FileStorageService {
     public void deleteFile(String objectKey) {
         checkObjectExist(objectKey);
         minioService.removeObject(objectKey);
+    }
+
+    public ResourceInfo getResourceInfo(String path) {
+        StatObjectResponse stat = minioService.getObjectStat(path);
+        return new ResourceInfo(
+                extractPath(stat.object()),
+                extractName(stat.object()),
+                stat.size(),
+                ResourceType.FILE
+        );
+    }
+
+    private String extractPath(String objectKey) {
+        int index = objectKey.lastIndexOf('/');
+        return index == -1 ? "" : objectKey.substring(0, index + 1);
+    }
+
+    private String extractName(String objectKey) {
+        int index = objectKey.lastIndexOf("/");
+        return index == -1 ? objectKey : objectKey.substring(index + 1);
     }
 
     private void checkObjectNotExist(String objectKey) {

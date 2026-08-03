@@ -109,6 +109,14 @@ public class MinioService {
                             .object(objectKey)
                             .build()
             );
+        } catch (ErrorResponseException e) {
+
+            if ("NoSuchKey".equals(e.errorResponse().code())) {
+                throw new ObjectNotFoundException(objectKey);
+            }
+
+            throw new StatObjectException(objectKey, e);
+
         } catch (Exception e) {
             throw new StatObjectException(objectKey, e);
         }
