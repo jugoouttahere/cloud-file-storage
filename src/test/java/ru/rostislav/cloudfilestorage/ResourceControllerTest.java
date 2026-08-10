@@ -3,10 +3,15 @@ package ru.rostislav.cloudfilestorage;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.nio.charset.StandardCharsets;
+
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,5 +46,41 @@ public class ResourceControllerTest extends MinioIntegrationTest {
                 )
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("File with name:missing.txt not found."));
+    }
+
+    @SneakyThrows
+    @WithMockUser
+    @Test
+    void shouldUploadFiles() {
+        MockMultipartFile file1 = new MockMultipartFile(
+                "files",
+                "hello.txt",
+                "text/plain",
+                "Hello".getBytes(StandardCharsets.UTF_8)
+        );
+
+        MockMultipartFile file2 = new MockMultipartFile(
+                "files",
+                "world.txt",
+                "text/plain",
+                "World".getBytes(StandardCharsets.UTF_8)
+        );
+
+        mockMvc.perform(
+                        multipart("/resource")
+                                .file(file1)
+                                .file(file2)
+                                .param("path", "storage/")
+                )
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].name").value("hello.txt"))
+                .andExpect(jsonPath("$[0].size").value(5))
+                .andExpect(jsonPath("$[0].type").value("FILE"))
+                .andExpect(jsonPath("$[1].name").value("world.txt"))
+                .andExpect(jsonPath("$[1].size").value(5))
+                .andExpect(jsonPath("$[1].type").value("FILE"))
+                .andExpect(jsonPath("$[0].path").value("storage/"))
+                .andExpect(jsonPath("$[1].path").value("storage/"));
     }
 }

@@ -110,13 +110,10 @@ public class MinioService {
                             .build()
             );
         } catch (ErrorResponseException e) {
-
             if ("NoSuchKey".equals(e.errorResponse().code())) {
                 throw new ObjectNotFoundException(objectKey);
             }
-
             throw new StatObjectException(objectKey, e);
-
         } catch (Exception e) {
             throw new StatObjectException(objectKey, e);
         }
@@ -132,7 +129,7 @@ public class MinioService {
             );
             return true;
         } catch (ErrorResponseException e) {
-            if (e.errorResponse().code().equals("NoSuchKey")) {
+            if ("NoSuchKey".equals(e.errorResponse().code())) {
                 return false;
             }
             throw new RuntimeException("Failed to check object existence", e);

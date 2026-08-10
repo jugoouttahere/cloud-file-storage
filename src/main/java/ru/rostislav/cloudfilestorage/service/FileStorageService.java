@@ -14,6 +14,8 @@ import ru.rostislav.cloudfilestorage.exception.minio.ObjectAlreadyExistsExceptio
 import ru.rostislav.cloudfilestorage.exception.minio.ObjectNotFoundException;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -21,16 +23,23 @@ public class FileStorageService {
 
     private final MinioService minioService;
 
-    public void uploadFile(String objectKey, MultipartFile file) {
-        if (file.isEmpty()) {
-            throw new EmptyFileException(objectKey);
+    public List<ResourceInfo> uploadFiles(String path, List<MultipartFile> files) {
+        List<ResourceInfo> infoList = new ArrayList<>();
+        String normalizedPath = normalizePath(path);
+        for (MultipartFile file : files) {
+            if (file.isEmpty()) {
+                throw new EmptyFileException(file.getOriginalFilename());
+            }
+            String fullPath = normalizedPath + file.getOriginalFilename();
+            checkObjectNotExist(fullPath);
+            minioService.putObject(file, fullPath);
+            infoList.add(getResourceInfo(fullPath));
         }
-        checkObjectNotExist(objectKey);
-        minioService.putObject(file, objectKey);
+        return infoList;
     }
 
     public void createEmptyFolder(String folderKey) {
-        String normalizedFolderKey = normalizeFolder(folderKey);
+        String normalizedFolderKey = normalizePath(folderKey);
         checkObjectNotExist(normalizedFolderKey);
         minioService.putEmptyObject(normalizedFolderKey);
     }
@@ -43,8 +52,8 @@ public class FileStorageService {
     }
 
     public void renameFolder(String oldFolderKey, String newFolderKey) {
-        String normalizedOldFolderKey = normalizeFolder(oldFolderKey);
-        String normalizedNewFolderKey = normalizeFolder(newFolderKey);
+        String normalizedOldFolderKey = normalizePath(oldFolderKey);
+        String normalizedNewFolderKey = normalizePath(newFolderKey);
         Iterable<Result<Item>> oldObjectList = minioService.getObjectList(normalizedOldFolderKey);
         for (Result<Item> object : oldObjectList) {
             String oldObjectKey = null;
@@ -60,12 +69,12 @@ public class FileStorageService {
         }
     }
 
-    public void moveFile(String source, String dest) {
-        renameFile(source, dest);
-    }
-
-    public void moveFolder(String source, String dest) {
-        renameFolder(source, dest);
+    public void moveResource(String source, String dest) {
+        if (source.endsWith("/")) {
+            renameFolder(source, dest);
+        } else {
+            renameFile(source, dest);
+        }
     }
 
     public InputStream downloadFile(String objectKey) {
@@ -110,7 +119,7 @@ public class FileStorageService {
         }
     }
 
-    private String normalizeFolder(String folder) {
+    private String normalizePath(String folder) {
         return folder.endsWith("/") ? folder : folder + "/";
     }
 }
