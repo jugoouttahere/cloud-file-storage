@@ -13,9 +13,13 @@ import ru.rostislav.cloudfilestorage.exception.minio.GetObjectException;
 import ru.rostislav.cloudfilestorage.exception.minio.ObjectAlreadyExistsException;
 import ru.rostislav.cloudfilestorage.exception.minio.ObjectNotFoundException;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @RequiredArgsConstructor
 @Service
@@ -80,6 +84,43 @@ public class FileStorageService {
     public InputStream downloadFile(String objectKey) {
         checkObjectExist(objectKey);
         return minioService.getObject(objectKey);
+    }
+
+    public InputStream downloadFolder(String folderKey) {
+        String normalizedFolderKey = normalizePath(folderKey);
+
+        checkObjectExist(normalizedFolderKey);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+
+            for (Result<Item> result : minioService.getObjectList(normalizedFolderKey)) {
+                Item item = result.get();
+                String objectKey = item.objectName();
+                if (objectKey.equals(normalizedFolderKey)) {
+                    continue;
+                }
+                String relativePath = objectKey.substring(normalizedFolderKey.length());
+
+                ZipEntry zipEntry = new ZipEntry(relativePath);
+                zipOutputStream.putNextEntry(zipEntry);
+                try (InputStream inputStream = minioService.getObject(objectKey)) {
+                    inputStream.transferTo(zipOutputStream);
+                }
+                zipOutputStream.closeEntry();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create ZIP archive", e);
+        }
+        return new ByteArrayInputStream(outputStream.toByteArray());
+    }
+
+    public InputStream downloadResource(String path) {
+        if (path.endsWith("/")) {
+            return downloadFolder(path);
+        } else {
+            return downloadFile(path);
+        }
     }
 
     public void deleteFile(String objectKey) {

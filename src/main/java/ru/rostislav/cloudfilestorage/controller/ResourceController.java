@@ -2,6 +2,7 @@ package ru.rostislav.cloudfilestorage.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -45,14 +46,15 @@ public class ResourceController {
     }
 
     @GetMapping("/download")
-    public ResponseEntity<InputStreamResource> downloadResource(
+    public ResponseEntity<Resource> downloadResource(
             @RequestParam String path
     ) {
-        InputStream downloadedFile = fileStorageService.downloadFile(path);
+        InputStream inputStream = fileStorageService.downloadResource(path);
+        Resource resource = new InputStreamResource(inputStream);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(new InputStreamResource(downloadedFile));
+                .body(resource);
     }
 
     @PostMapping("/move")
