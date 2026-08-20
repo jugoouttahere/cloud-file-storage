@@ -4,6 +4,7 @@ import io.minio.Result;
 import io.minio.StatObjectResponse;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceInfo;
@@ -44,7 +45,7 @@ public class FileStorageService {
 
     public void createEmptyFolder(String folderKey) {
         String normalizedFolderKey = normalizePath(folderKey);
-        checkObjectNotExist(normalizedFolderKey);
+        checkFolderNotExist(normalizedFolderKey);
         minioService.putEmptyObject(normalizedFolderKey);
     }
 
@@ -58,6 +59,9 @@ public class FileStorageService {
     public void renameFolder(String oldFolderKey, String newFolderKey) {
         String normalizedOldFolderKey = normalizePath(oldFolderKey);
         String normalizedNewFolderKey = normalizePath(newFolderKey);
+        checkFolderExist(normalizedOldFolderKey);
+        checkFolderNotExist(normalizedNewFolderKey);
+
         Iterable<Result<Item>> oldObjectList = minioService.getObjectList(normalizedOldFolderKey);
         for (Result<Item> object : oldObjectList) {
             String oldObjectKey = null;
@@ -73,12 +77,13 @@ public class FileStorageService {
         }
     }
 
-    public void moveResource(String source, String dest) {
+    public ResourceInfo moveResource(String source, String dest) {
         if (source.endsWith("/")) {
             renameFolder(source, dest);
         } else {
             renameFile(source, dest);
         }
+        return getResourceInfo(dest);
     }
 
     public InputStream downloadFile(String objectKey) {
@@ -89,7 +94,7 @@ public class FileStorageService {
     public InputStream downloadFolder(String folderKey) {
         String normalizedFolderKey = normalizePath(folderKey);
 
-        checkObjectExist(normalizedFolderKey);
+        checkFolderExist(normalizedFolderKey);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
@@ -129,13 +134,39 @@ public class FileStorageService {
     }
 
     public ResourceInfo getResourceInfo(String path) {
+        if (path.endsWith("/")) {
+            return getFolderInfo(path);
+        }
+
+        return getFileInfo(path);
+    }
+
+    private ResourceInfo getFileInfo(String path) {
         StatObjectResponse stat = minioService.getObjectStat(path);
+
         return new ResourceInfo(
                 extractPath(stat.object()),
                 extractName(stat.object()),
                 stat.size(),
                 ResourceType.FILE
         );
+    }
+
+    private ResourceInfo getFolderInfo(String path) {
+        String normalizedPath = normalizePath(path);
+
+        checkFolderExist(normalizedPath);
+
+        return new ResourceInfo(
+                extractPath(normalizedPath),
+                extractName(normalizedPath),
+                null,
+                ResourceType.DIRECTORY
+        );
+    }
+
+    private static ResourceType getResourceType(String path) {
+        return path.endsWith("/") ? ResourceType.DIRECTORY : ResourceType.FILE;
     }
 
     private String extractPath(String objectKey) {
@@ -146,6 +177,24 @@ public class FileStorageService {
     private String extractName(String objectKey) {
         int index = objectKey.lastIndexOf("/");
         return index == -1 ? objectKey : objectKey.substring(index + 1);
+    }
+
+    private void checkFolderExist(String folderPath) {
+        Iterable<Result<Item>> objects =
+                minioService.getObjectList(normalizePath(folderPath));
+
+        if (!objects.iterator().hasNext()) {
+            throw new ObjectNotFoundException(folderPath);
+        }
+    }
+
+    private void checkFolderNotExist(String folderPath) {
+        Iterable<Result<Item>> objects =
+                minioService.getObjectList(normalizePath(folderPath));
+
+        if (objects.iterator().hasNext()) {
+            throw new ObjectAlreadyExistsException(folderPath);
+        }
     }
 
     private void checkObjectNotExist(String objectKey) {

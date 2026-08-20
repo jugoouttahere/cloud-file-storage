@@ -375,7 +375,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     @SneakyThrows
     @Test
     void shouldThrowWhenCreatingExistingFolder() {
-        putObject("folder/", "");
+        putObject("folder/file.txt", "");
 
         assertThrows(
                 ObjectAlreadyExistsException.class,

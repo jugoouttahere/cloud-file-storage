@@ -17,12 +17,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 public class ResourceControllerTest extends MinioIntegrationTest {
 
@@ -152,8 +149,6 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     @WithMockUser
     @Test
     void shouldDownloadFolderAsZip() {
-        putObject("folder/", "");
-
         putObject("folder/file1.txt", "Hello");
         putObject("folder/file2.txt", "World");
         putObject("folder/inner/file3.txt", "MinIO");
@@ -219,6 +214,117 @@ public class ResourceControllerTest extends MinioIntegrationTest {
         mockMvc.perform(
                         get("/resource/download")
                                 .param("path", "hello.txt")
+                )
+                .andExpect(status().isUnauthorized());
+    }
+
+    @SneakyThrows
+    @WithMockUser
+    @Test
+    void shouldMoveFile() {
+        putObject("hello.txt", "Hello");
+        mockMvc.perform(
+                        post("/resource/move")
+                                .param("from", "hello.txt")
+                                .param("to", "new-hello.txt")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.name").value("new-hello.txt"))
+                .andExpect(jsonPath("$.size").value(5))
+                .andExpect(jsonPath("$.type").value("FILE"));
+
+        assertFalse(isObjectExist("hello.txt"));
+        assertTrue(isObjectExist("new-hello.txt"));
+    }
+
+    @SneakyThrows
+    @WithMockUser
+    @Test
+    void shouldMoveFolder() {
+        putObject("folder/file1.txt", "Hello");
+        putObject("folder/file2.txt", "World");
+        putObject("folder/inner/file3.txt", "MinIO");
+
+        mockMvc.perform(
+                        post("/resource/move")
+                                .param("from", "folder/")
+                                .param("to", "new-folder/")
+                )
+                .andExpect(status().isOk());
+
+        assertTrue(isObjectExist("new-folder/file1.txt"));
+        assertTrue(isObjectExist("new-folder/file2.txt"));
+        assertTrue(isObjectExist("new-folder/inner/file3.txt"));
+
+        assertFalse(isObjectExist("folder/file1.txt"));
+        assertFalse(isObjectExist("folder/file2.txt"));
+        assertFalse(isObjectExist("folder/inner/file3.txt"));
+    }
+
+    @SneakyThrows
+    @WithMockUser
+    @Test
+    void shouldReturn404WhenMovingMissingFile() {
+        mockMvc.perform(
+                        post("/resource/move")
+                                .param("from", "missing.txt")
+                                .param("to", "new-file.txt")
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message")
+                        .value("File with name:missing.txt not found."));
+    }
+
+    @SneakyThrows
+    @WithMockUser
+    @Test
+    void shouldReturn404WhenMovingMissingFolder() {
+        mockMvc.perform(
+                        post("/resource/move")
+                                .param("from", "missing/")
+                                .param("to", "new-folder/")
+                )
+                .andExpect(status().isNotFound());
+    }
+
+    @SneakyThrows
+    @WithMockUser
+    @Test
+    void shouldReturn409WhenMovingFileToExistingPath() {
+        putObject("hello.txt", "Hello");
+        putObject("new-hello.txt", "World");
+
+        mockMvc.perform(
+                        post("/resource/move")
+                                .param("from", "hello.txt")
+                                .param("to", "new-hello.txt")
+                )
+                .andExpect(status().isConflict());
+    }
+
+    @SneakyThrows
+    @WithMockUser
+    @Test
+    void shouldReturn409WhenMovingFolderToExistingPath() {
+        putObject("folder/file.txt", "Hello");
+        putObject("new-folder/file.txt", "World");
+
+        mockMvc.perform(
+                        post("/resource/move")
+                                .param("from", "folder/")
+                                .param("to", "new-folder/")
+                )
+                .andExpect(status().isConflict());
+    }
+
+    @SneakyThrows
+    @Test
+    void shouldReturn401WhenMovingResourceWithoutAuthentication() {
+        mockMvc.perform(
+                        post("/resource/move")
+                                .param("from", "hello.txt")
+                                .param("to", "new-hello.txt")
                 )
                 .andExpect(status().isUnauthorized());
     }

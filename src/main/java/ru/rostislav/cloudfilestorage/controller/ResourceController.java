@@ -62,8 +62,7 @@ public class ResourceController {
             @RequestParam String from,
             @RequestParam String to
     ) {
-        fileStorageService.moveResource(from, to);
-        ResourceInfo info = fileStorageService.getResourceInfo(to);
+        ResourceInfo info = fileStorageService.moveResource(from, to);
         ResourceResponse response = resourceMapper.toResponse(info);
         return ResponseEntity
                 .status(HttpStatus.OK)
