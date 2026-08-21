@@ -147,4 +147,14 @@ public class MinioService {
                         .build()
         );
     }
+
+    public Iterable<Result<Item>> getDirectoryContent(String path) {
+        return minioClient.listObjects(
+                ListObjectsArgs.builder()
+                        .bucket(properties.getBucket())
+                        .prefix(path)
+                        .recursive(false)
+                        .build()
+        );
+    }
 }

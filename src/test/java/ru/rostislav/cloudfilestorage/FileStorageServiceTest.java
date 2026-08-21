@@ -288,16 +288,14 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     @SneakyThrows
     @Test
     void shouldCreateEmptyFolder() {
-        fileStorageService.createEmptyFolder("folder/");
+        ResourceInfo result = fileStorageService.createEmptyFolder("folder/");
 
-        StatObjectResponse statObject = minioClient.statObject(
-                StatObjectArgs.builder()
-                        .bucket("cloud-storage")
-                        .object("folder/")
-                        .build()
-        );
+        assertTrue(isObjectExist("folder/"));
 
-        assertEquals(0, statObject.size());
+        assertEquals("", result.path());
+        assertEquals("folder", result.name());
+        assertNull(result.size());
+        assertEquals(ResourceType.DIRECTORY, result.type());
     }
 
     @SneakyThrows

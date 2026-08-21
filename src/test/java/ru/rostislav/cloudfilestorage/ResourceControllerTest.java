@@ -51,7 +51,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
                                 .param("path", "missing.txt")
                 )
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("File with name:missing.txt not found."));
+                .andExpect(jsonPath("$.message").value("Resource not found: missing.txt"));
     }
 
     @SneakyThrows
@@ -114,7 +114,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
                 )
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message")
-                        .value("File with name:missing.txt not found."));
+                        .value("Resource not found: missing.txt"));
     }
 
     @Test
@@ -196,7 +196,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
                 )
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message")
-                        .value("File with name:missing.txt not found."));
+                        .value("Resource not found: missing.txt"));
     }
 
     @WithMockUser
@@ -273,7 +273,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
                 )
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message")
-                        .value("File with name:missing.txt not found."));
+                        .value("Resource not found: missing.txt"));
     }
 
     @SneakyThrows

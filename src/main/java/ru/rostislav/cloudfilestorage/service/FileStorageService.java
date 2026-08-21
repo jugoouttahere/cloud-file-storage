@@ -4,7 +4,6 @@ import io.minio.Result;
 import io.minio.StatObjectResponse;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceInfo;
@@ -43,10 +42,13 @@ public class FileStorageService {
         return infoList;
     }
 
-    public void createEmptyFolder(String folderKey) {
+    public ResourceInfo createEmptyFolder(String folderKey) {
         String normalizedFolderKey = normalizePath(folderKey);
+        checkParentFolderExist(normalizedFolderKey);
         checkFolderNotExist(normalizedFolderKey);
         minioService.putEmptyObject(normalizedFolderKey);
+
+        return getResourceInfo(normalizedFolderKey);
     }
 
     public void renameFile(String oldObjectKey, String newObjectKey) {
@@ -133,6 +135,43 @@ public class FileStorageService {
         minioService.removeObject(objectKey);
     }
 
+    public List<ResourceInfo> getDirectoryContent(String path) {
+        String normalizedPath = normalizePath(path);
+        checkFolderExist(normalizedPath);
+
+        List<ResourceInfo> infos = new ArrayList<>();
+
+        for (Result<Item> result : minioService.getDirectoryContent(normalizedPath)) {
+            try {
+                Item item = result.get();
+                String objectKey = item.objectName();
+
+                if (item.isDir()) {
+                    String directoryPath = objectKey.substring(0, objectKey.length() - 1);
+
+                    infos.add(new ResourceInfo(
+                            extractPath(directoryPath),
+                            extractName(directoryPath),
+                            null,
+                            ResourceType.DIRECTORY
+                    ));
+                } else {
+                    infos.add(new ResourceInfo(
+                            extractPath(objectKey),
+                            extractName(objectKey),
+                            item.size(),
+                            ResourceType.FILE
+                    ));
+                }
+
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return infos;
+    }
+
     public ResourceInfo getResourceInfo(String path) {
         if (path.endsWith("/")) {
             return getFolderInfo(path);
@@ -157,12 +196,23 @@ public class FileStorageService {
 
         checkFolderExist(normalizedPath);
 
+        String directoryPath = normalizedPath.substring(0, normalizedPath.length() - 1);
+
         return new ResourceInfo(
-                extractPath(normalizedPath),
-                extractName(normalizedPath),
+                extractPath(directoryPath),
+                extractName(directoryPath),
                 null,
                 ResourceType.DIRECTORY
         );
+    }
+
+    private void checkParentFolderExist(String folderPath) {
+        int index = folderPath.lastIndexOf("/", folderPath.length() - 2);
+        if (index == -1) {
+            return;
+        }
+        String parentPath = folderPath.substring(0, index + 1);
+        checkFolderExist(parentPath);
     }
 
     private static ResourceType getResourceType(String path) {
