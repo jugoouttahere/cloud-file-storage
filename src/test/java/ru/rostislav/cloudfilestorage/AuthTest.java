@@ -1,4 +1,4 @@
-package ru.rostislav.cloudfilestorage.controller;
+package ru.rostislav.cloudfilestorage;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,7 +8,6 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import ru.rostislav.cloudfilestorage.integration.IntegrationTest;
 import ru.rostislav.cloudfilestorage.entity.User;
 import ru.rostislav.cloudfilestorage.repository.UserRepository;
 
@@ -18,7 +17,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class AuthControllerTest extends IntegrationTest {
+class AuthTest extends IntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;

@@ -3,7 +3,6 @@ package ru.rostislav.cloudfilestorage;
 import io.minio.*;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
-import ru.rostislav.cloudfilestorage.integration.MinioIntegrationTest;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;

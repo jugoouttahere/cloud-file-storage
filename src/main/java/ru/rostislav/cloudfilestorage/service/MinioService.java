@@ -6,24 +6,19 @@ import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import ru.rostislav.cloudfilestorage.config.MinioProperties;
-import ru.rostislav.cloudfilestorage.dto.storage.StorageObject;
-import ru.rostislav.cloudfilestorage.exception.minio.ObjectNotFoundException;
-import ru.rostislav.cloudfilestorage.exception.minio.ObjectOperationException;
-import ru.rostislav.cloudfilestorage.mapper.StorageMapper;
+import ru.rostislav.cloudfilestorage.exception.minio.*;
+import ru.rostislav.cloudfilestorage.util.MinioProperties;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 @RequiredArgsConstructor
 @Service
 public class MinioService {
 
     private final MinioClient minioClient;
+
     private final MinioProperties properties;
-    private final StorageMapper storageMapper;
 
     public void putObject(MultipartFile file, String objectKey) {
         try {
@@ -40,7 +35,7 @@ public class MinioService {
                             .build()
             );
         } catch (Exception e) {
-            throw new ObjectOperationException(objectKey, "put", e);
+            throw new PutObjectException(objectKey, e);
         }
     }
 
@@ -58,7 +53,7 @@ public class MinioService {
                             .build()
             );
         } catch (Exception e) {
-            throw new ObjectOperationException(objectKey, "put", e);
+            throw new PutObjectException(objectKey, e);
         }
     }
 
@@ -71,7 +66,7 @@ public class MinioService {
                             .build()
             );
         } catch (Exception e) {
-            throw new ObjectOperationException(objectKey, "get", e);
+            throw new GetObjectException(objectKey, e);
         }
     }
 
@@ -84,7 +79,7 @@ public class MinioService {
                             .build()
             );
         } catch (Exception e) {
-            throw new ObjectOperationException(objectKey, "remove", e);
+            throw new RemoveObjectException(objectKey, e);
         }
     }
 
@@ -102,26 +97,25 @@ public class MinioService {
                             .build()
             );
         } catch (Exception e) {
-            throw new ObjectOperationException(dest, "copy", e);
+            throw new CopyObjectException(dest, e);
         }
     }
 
-    public StorageObject getObjectStat(String objectKey) {
+    public StatObjectResponse getObjectStat(String objectKey) {
         try {
-            StatObjectResponse stat = minioClient.statObject(
+            return minioClient.statObject(
                     StatObjectArgs.builder()
                             .bucket(properties.getBucket())
                             .object(objectKey)
                             .build()
             );
-            return storageMapper.toStorageObject(stat);
         } catch (ErrorResponseException e) {
             if ("NoSuchKey".equals(e.errorResponse().code())) {
                 throw new ObjectNotFoundException(objectKey);
             }
-            throw new ObjectOperationException(objectKey, "stat", e);
+            throw new StatObjectException(objectKey, e);
         } catch (Exception e) {
-            throw new ObjectOperationException(objectKey, "stat", e);
+            throw new StatObjectException(objectKey, e);
         }
     }
 
@@ -140,35 +134,27 @@ public class MinioService {
             }
             throw new RuntimeException("Failed to check object existence", e);
         } catch (Exception e) {
-            throw new ObjectOperationException(objectKey, "stat", e);
+            throw new StatObjectException(objectKey, e);
         }
     }
 
-    public List<StorageObject> getObjects(String path, boolean isRecursive) {
-        List<StorageObject> objectList = new ArrayList<>();
-
-        try {
-            Iterable<Result<Item>> results = minioClient.listObjects(
-                    ListObjectsArgs.builder()
-                            .bucket(properties.getBucket())
-                            .prefix(path)
-                            .recursive(isRecursive)
-                            .build()
-            );
-
-            for (Result<Item> object : results) {
-                Item item = object.get();
-                objectList.add(storageMapper.toStorageObject(item));
-            }
-        } catch (Exception e) {
-            throw new ObjectOperationException(path, "get objects", e);
-        }
-
-        return objectList;
+    public Iterable<Result<Item>> getObjectList(String path) {
+        return minioClient.listObjects(
+                ListObjectsArgs.builder()
+                        .bucket(properties.getBucket())
+                        .prefix(path)
+                        .recursive(true)
+                        .build()
+        );
     }
 
-    public boolean isFolderExist(String folderPath) {
-        List<StorageObject> objects = getObjects(folderPath, true);
-        return !objects.isEmpty();
+    public Iterable<Result<Item>> getDirectoryContent(String path) {
+        return minioClient.listObjects(
+                ListObjectsArgs.builder()
+                        .bucket(properties.getBucket())
+                        .prefix(path)
+                        .recursive(false)
+                        .build()
+        );
     }
 }

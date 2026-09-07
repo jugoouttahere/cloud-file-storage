@@ -1,4 +1,4 @@
-package ru.rostislav.cloudfilestorage.controller;
+package ru.rostislav.cloudfilestorage;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
@@ -8,7 +8,6 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import ru.rostislav.cloudfilestorage.integration.MinioIntegrationTest;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;

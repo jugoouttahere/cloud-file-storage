@@ -1,4 +1,4 @@
-package ru.rostislav.cloudfilestorage.integration;
+package ru.rostislav.cloudfilestorage;
 
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
