@@ -1,4 +1,4 @@
-package ru.rostislav.cloudfilestorage.security;
+package ru.rostislav.cloudfilestorage.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;

@@ -1,4 +1,4 @@
-package ru.rostislav.cloudfilestorage;
+package ru.rostislav.cloudfilestorage.integration;
 
 import io.minio.*;
 import io.minio.errors.ErrorResponseException;
@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import ru.rostislav.cloudfilestorage.exception.minio.StatObjectException;
+import ru.rostislav.cloudfilestorage.exception.minio.ObjectOperationException;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -67,7 +67,7 @@ public abstract class MinioIntegrationTest extends IntegrationTest {
             if (e.errorResponse().code().equals("NoSuchKey")) {
                 return false;
             }
-            throw new StatObjectException(objectKey, e);
+            throw new ObjectOperationException(objectKey, "stat", e);
         }
     }
 }

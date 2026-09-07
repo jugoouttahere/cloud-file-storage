@@ -73,7 +73,10 @@ public class ResourceController {
     public ResponseEntity<List<ResourceResponse>> searchResource(
             @RequestParam String query
     ) {
+
+        //TODO create and replace by fileStorageService.searchResource(query)
         ResourceInfo info = fileStorageService.getResourceInfo(query);
+
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(List.of(resourceMapper.toResponse(info)));
