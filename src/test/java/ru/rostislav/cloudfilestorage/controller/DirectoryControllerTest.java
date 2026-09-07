@@ -1,10 +1,11 @@
-package ru.rostislav.cloudfilestorage;
+package ru.rostislav.cloudfilestorage.controller;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.rostislav.cloudfilestorage.integration.MinioIntegrationTest;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;

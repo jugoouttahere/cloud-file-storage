@@ -1,4 +1,4 @@
-package ru.rostislav.cloudfilestorage.exception;
+package ru.rostislav.cloudfilestorage.controller.advice;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -6,6 +6,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.rostislav.cloudfilestorage.dto.ErrorResponse;
+import ru.rostislav.cloudfilestorage.exception.EmptyFileException;
 import ru.rostislav.cloudfilestorage.exception.auth.InvalidCredentialsException;
 import ru.rostislav.cloudfilestorage.exception.auth.UserAlreadyExistsException;
 import ru.rostislav.cloudfilestorage.exception.minio.*;
@@ -70,13 +71,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({
-            PutObjectException.class,
-            CopyObjectException.class,
-            GetObjectException.class,
-            RemoveObjectException.class,
-            StatObjectException.class
+            ObjectOperationException.class
     })
-    public ResponseEntity<ErrorResponse> handleMinioError(RuntimeException exception) {
+    public ResponseEntity<ErrorResponse> handleObjectOperation(ObjectOperationException exception) {
         ErrorResponse errorResponse = new ErrorResponse(exception.getMessage());
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)

@@ -1,4 +1,4 @@
-package ru.rostislav.cloudfilestorage.exception.minio;
+package ru.rostislav.cloudfilestorage.exception;
 
 public class EmptyFileException extends RuntimeException {
     public EmptyFileException(String fileName) {

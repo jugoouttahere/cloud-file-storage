@@ -1,16 +1,16 @@
-package ru.rostislav.cloudfilestorage;
+package ru.rostislav.cloudfilestorage.service;
 
 import io.minio.*;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
+import ru.rostislav.cloudfilestorage.integration.MinioIntegrationTest;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceInfo;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceType;
-import ru.rostislav.cloudfilestorage.exception.minio.EmptyFileException;
+import ru.rostislav.cloudfilestorage.exception.EmptyFileException;
 import ru.rostislav.cloudfilestorage.exception.minio.ObjectAlreadyExistsException;
 import ru.rostislav.cloudfilestorage.exception.minio.ObjectNotFoundException;
-import ru.rostislav.cloudfilestorage.service.FileStorageService;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
