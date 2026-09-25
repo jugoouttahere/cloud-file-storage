@@ -22,7 +22,6 @@ import java.util.List;
 public class ResourceController {
 
     private final FileStorageService fileStorageService;
-
     private final ResourceMapper resourceMapper;
 
     @GetMapping
@@ -39,7 +38,7 @@ public class ResourceController {
     public ResponseEntity<Void> deleteResource(
             @RequestParam String path
     ) {
-        fileStorageService.deleteFile(path);
+        fileStorageService.deleteResource(path);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
@@ -73,13 +72,10 @@ public class ResourceController {
     public ResponseEntity<List<ResourceResponse>> searchResource(
             @RequestParam String query
     ) {
-
-        //TODO create and replace by fileStorageService.searchResource(query)
-        ResourceInfo info = fileStorageService.getResourceInfo(query);
-
+        List<ResourceInfo> infos = fileStorageService.searchResource(query);
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(List.of(resourceMapper.toResponse(info)));
+                .body(resourceMapper.toResponseList(infos));
     }
 
     @PostMapping

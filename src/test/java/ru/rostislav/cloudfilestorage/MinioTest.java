@@ -33,7 +33,7 @@ public class MinioTest extends MinioIntegrationTest {
         GetObjectResponse getObjectResponse = minioClient.getObject(
                 GetObjectArgs.builder()
                         .bucket("cloud-storage")
-                        .object("hello.txt")
+                        .object("user-1-files/hello.txt")
                         .build()
         );
 

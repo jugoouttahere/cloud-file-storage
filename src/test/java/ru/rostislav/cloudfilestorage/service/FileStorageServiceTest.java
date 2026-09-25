@@ -1,20 +1,26 @@
 package ru.rostislav.cloudfilestorage.service;
 
-import io.minio.*;
+import io.minio.GetObjectArgs;
+import io.minio.GetObjectResponse;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
-import ru.rostislav.cloudfilestorage.integration.MinioIntegrationTest;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceInfo;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceType;
 import ru.rostislav.cloudfilestorage.exception.EmptyFileException;
 import ru.rostislav.cloudfilestorage.exception.minio.ObjectAlreadyExistsException;
 import ru.rostislav.cloudfilestorage.exception.minio.ObjectNotFoundException;
+import ru.rostislav.cloudfilestorage.integration.MinioIntegrationTest;
+import ru.rostislav.cloudfilestorage.security.WithMockUserDetails;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -24,6 +30,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     private FileStorageService fileStorageService;
 
     @SneakyThrows
+    @WithMockUserDetails
     @Test
     void shouldRenameFile() {
         String text = "Hello MinIO";
@@ -35,7 +42,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
         GetObjectResponse getObjectResponse = minioClient.getObject(
                 GetObjectArgs.builder()
                         .bucket("cloud-storage")
-                        .object("new-hello.txt")
+                        .object("user-1-files/new-hello.txt")
                         .build()
         );
 
@@ -47,6 +54,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
+    @WithMockUserDetails
     @Test
     void shouldRenameFolder() {
         putObject("old/file1.txt", "");
@@ -64,6 +72,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
+    @WithMockUserDetails
     @Test
     void shouldDeleteFile() {
         putObject("hello.txt", "");
@@ -74,6 +83,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
+    @WithMockUserDetails
     @Test
     void shouldUploadFile() {
         String expected = "Hello MinIO";
@@ -90,7 +100,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
         GetObjectResponse getObjectResponse = minioClient.getObject(
                 GetObjectArgs.builder()
                         .bucket("cloud-storage")
-                        .object("hello.txt")
+                        .object("user-1-files/hello.txt")
                         .build()
         );
 
@@ -101,6 +111,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
+    @WithMockUserDetails
     @Test
     void shouldUploadMultipleFiles() {
         String expectedFile1 = "Hello";
@@ -128,14 +139,14 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
         GetObjectResponse responseFile1 = minioClient.getObject(
                 GetObjectArgs.builder()
                         .bucket("cloud-storage")
-                        .object("hello.txt")
+                        .object("user-1-files/hello.txt")
                         .build()
         );
 
         GetObjectResponse responseFile2 = minioClient.getObject(
                 GetObjectArgs.builder()
                         .bucket("cloud-storage")
-                        .object("world.txt")
+                        .object("user-1-files/world.txt")
                         .build()
         );
 
@@ -172,6 +183,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
+    @WithMockUserDetails
     @Test
     void shouldUploadFilesWithNestedDirectories() {
         String expectedFile1 = "Test1";
@@ -207,21 +219,21 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
         GetObjectResponse responseFile1 = minioClient.getObject(
                 GetObjectArgs.builder()
                         .bucket("cloud-storage")
-                        .object("storage/test1.txt")
+                        .object("user-1-files/storage/test1.txt")
                         .build()
         );
 
         GetObjectResponse responseFile2 = minioClient.getObject(
                 GetObjectArgs.builder()
                         .bucket("cloud-storage")
-                        .object("storage/folder/test2.txt")
+                        .object("user-1-files/storage/folder/test2.txt")
                         .build()
         );
 
         GetObjectResponse responseFile3 = minioClient.getObject(
                 GetObjectArgs.builder()
                         .bucket("cloud-storage")
-                        .object("storage/folder/inner/test3.txt")
+                        .object("user-1-files/storage/folder/inner/test3.txt")
                         .build()
         );
 
@@ -271,6 +283,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
+    @WithMockUserDetails
     @Test
     void shouldDownloadFile() {
         String expected = "Hello MinIO";
@@ -286,19 +299,21 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
+    @WithMockUserDetails
     @Test
     void shouldCreateEmptyFolder() {
         ResourceInfo result = fileStorageService.createEmptyFolder("folder/");
 
         assertTrue(isObjectExist("folder/"));
 
-        assertEquals("", result.path());
+        assertEquals("/", result.path());
         assertEquals("folder", result.name());
         assertNull(result.size());
         assertEquals(ResourceType.DIRECTORY, result.type());
     }
 
     @SneakyThrows
+    @WithMockUserDetails
     @Test
     void shouldThrowWhenUploadingExistingFile() {
         putObject("hello.txt", "");
@@ -317,6 +332,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
+    @WithMockUserDetails
     @Test
     void shouldThrowWhenUploadingEmptyFile() {
         MockMultipartFile file = new MockMultipartFile(
@@ -328,11 +344,12 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
 
         assertThrows(
                 EmptyFileException.class,
-                () -> fileStorageService.uploadFiles("hello.txt", List.of(file))
+                () -> fileStorageService.uploadFiles("", List.of(file))
         );
     }
 
     @SneakyThrows
+    @WithMockUserDetails
     @Test
     void shouldThrowWhenDownloadingMissingFile() {
         assertThrows(
@@ -341,6 +358,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
         );
     }
 
+    @WithMockUserDetails
     @Test
     void shouldThrowWhenDeletingMissingFile() {
         assertThrows(
@@ -349,6 +367,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
         );
     }
 
+    @WithMockUserDetails
     @Test
     void shouldThrowWhenRenamingMissingFile() {
         assertThrows(
@@ -358,6 +377,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
+    @WithMockUserDetails
     @Test
     void shouldThrowWhenRenamingToExistingFile() {
         String text = "Hello MinIO";
@@ -371,6 +391,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
+    @WithMockUserDetails
     @Test
     void shouldThrowWhenCreatingExistingFolder() {
         putObject("folder/file.txt", "");
@@ -380,4 +401,294 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
                 () -> fileStorageService.createEmptyFolder("folder/")
         );
     }
+
+    @SneakyThrows
+    @WithMockUserDetails
+    @Test
+    void shouldDeleteFolder() {
+        putObject("folder/file1.txt", "");
+        putObject("folder/file2.txt", "");
+        putObject("folder/inner/file3.txt", "");
+
+        fileStorageService.deleteFolder("folder/");
+
+        assertFalse(isObjectExist("folder/file1.txt"));
+        assertFalse(isObjectExist("folder/file2.txt"));
+        assertFalse(isObjectExist("folder/inner/file3.txt"));
+    }
+
+    @SneakyThrows
+    @WithMockUserDetails
+    @Test
+    void shouldDownloadFolder() {
+        putObject("folder/file1.txt", "Hello");
+        putObject("folder/file2.txt", "World");
+        putObject("folder/inner/file3.txt", "MinIO");
+
+        try (InputStream inputStream = fileStorageService.downloadFolder("folder/")) {
+            byte[] zipBytes = inputStream.readAllBytes();
+
+            try (ZipInputStream zipInputStream =
+                         new ZipInputStream(new ByteArrayInputStream(zipBytes))) {
+
+                List<String> entries = new ArrayList<>();
+                ZipEntry entry;
+
+                while ((entry = zipInputStream.getNextEntry()) != null) {
+                    entries.add(entry.getName());
+                }
+
+                assertTrue(entries.contains("file1.txt"));
+                assertTrue(entries.contains("file2.txt"));
+                assertTrue(entries.contains("inner/file3.txt"));
+            }
+        }
+    }
+
+    @WithMockUserDetails
+    @Test
+    void shouldGetDirectoryContent() {
+        putObject("folder/file1.txt", "Hello");
+        putObject("folder/file2.txt", "World");
+        putObject("folder/inner/file3.txt", "MinIO");
+
+        List<ResourceInfo> result = fileStorageService.getDirectoryContent("folder/");
+
+        assertEquals(3, result.size());
+
+        assertTrue(result.contains(
+                new ResourceInfo("folder/", "file1.txt", 5L, ResourceType.FILE)
+        ));
+
+        assertTrue(result.contains(
+                new ResourceInfo("folder/", "file2.txt", 5L, ResourceType.FILE)
+        ));
+
+        assertTrue(result.contains(
+                new ResourceInfo("folder/", "inner", null, ResourceType.DIRECTORY)
+        ));
+
+        assertFalse(result.stream()
+                .anyMatch(resource -> resource.name().equals("file3.txt")));
+    }
+
+    @WithMockUserDetails
+    @Test
+    void shouldGetFileInfo() {
+        putObject("folder/file.txt", "Hello");
+
+        ResourceInfo result = fileStorageService.getResourceInfo("folder/file.txt");
+
+        assertEquals(
+                new ResourceInfo(
+                        "folder/",
+                        "file.txt",
+                        5L,
+                        ResourceType.FILE
+                ),
+                result
+        );
+    }
+
+    @WithMockUserDetails
+    @Test
+    void shouldGetFolderInfo() {
+        putObject("folder/file.txt", "Hello");
+
+        ResourceInfo result = fileStorageService.getResourceInfo("folder/");
+
+        assertEquals(
+                new ResourceInfo(
+                        "/",
+                        "folder",
+                        null,
+                        ResourceType.DIRECTORY
+                ),
+                result
+        );
+    }
+
+    @WithMockUserDetails
+    @Test
+    void shouldSearchResources() {
+        putObject("documents/report.txt", "Report");
+        putObject("documents/photo.jpg", "Photo");
+        putObject("documents/archive/report-old.txt", "Old report");
+
+        List<ResourceInfo> result = fileStorageService.searchResource("report");
+
+        assertEquals(2, result.size());
+
+        assertTrue(result.contains(
+                new ResourceInfo(
+                        "documents/",
+                        "report.txt",
+                        6L,
+                        ResourceType.FILE
+                )
+        ));
+
+        assertTrue(result.contains(
+                new ResourceInfo(
+                        "documents/archive/",
+                        "report-old.txt",
+                        10L,
+                        ResourceType.FILE
+                )
+        ));
+    }
+
+    @WithMockUserDetails
+    @Test
+    void shouldSearchDirectory() {
+        putFolder("documents/archive/");
+        putObject("documents/archive/file.txt", "File");
+
+        List<ResourceInfo> result = fileStorageService.searchResource("archive");
+
+        assertTrue(result.contains(
+                new ResourceInfo(
+                        "documents/",
+                        "archive",
+                        null,
+                        ResourceType.DIRECTORY
+                )
+        ));
+    }
+
+    @WithMockUserDetails
+    @Test
+    void shouldSearchResourcesIgnoringCase() {
+        putObject("documents/MyReport.txt", "Report");
+
+        List<ResourceInfo> result = fileStorageService.searchResource("MYREPORT");
+
+        assertTrue(result.contains(
+                new ResourceInfo(
+                        "documents/",
+                        "MyReport.txt",
+                        6L,
+                        ResourceType.FILE
+                )
+        ));
+    }
+
+    @WithMockUserDetails
+    @Test
+    void shouldMoveFile() {
+        putObject("folder/old.txt", "Hello");
+
+        ResourceInfo result =
+                fileStorageService.moveResource("folder/old.txt", "folder/new.txt");
+
+        assertEquals(
+                new ResourceInfo(
+                        "folder/",
+                        "new.txt",
+                        5L,
+                        ResourceType.FILE
+                ),
+                result
+        );
+
+        assertFalse(isObjectExist("folder/old.txt"));
+        assertTrue(isObjectExist("folder/new.txt"));
+    }
+
+    @WithMockUserDetails
+    @Test
+    void shouldMoveFolder() {
+        putObject("old-folder/file1.txt", "Hello");
+        putObject("old-folder/inner/file2.txt", "World");
+
+        ResourceInfo result =
+                fileStorageService.moveResource("old-folder/", "new-folder/");
+
+        assertEquals(
+                new ResourceInfo(
+                        "/",
+                        "new-folder",
+                        null,
+                        ResourceType.DIRECTORY
+                ),
+                result
+        );
+
+        assertFalse(isObjectExist("old-folder/file1.txt"));
+        assertFalse(isObjectExist("old-folder/inner/file2.txt"));
+
+        assertTrue(isObjectExist("new-folder/file1.txt"));
+        assertTrue(isObjectExist("new-folder/inner/file2.txt"));
+    }
+
+    @WithMockUserDetails
+    @Test
+    void shouldThrowWhenMovingFileToExistingPath() {
+        putObject("folder/old.txt", "Hello");
+        putObject("folder/existing.txt", "World");
+
+        assertThrows(
+                ObjectAlreadyExistsException.class,
+                () -> fileStorageService.moveResource(
+                        "folder/old.txt",
+                        "folder/existing.txt"
+                )
+        );
+
+        assertTrue(isObjectExist("folder/old.txt"));
+        assertTrue(isObjectExist("folder/existing.txt"));
+    }
+
+    @WithMockUserDetails
+    @Test
+    void shouldThrowWhenMovingFolderToExistingPath() {
+        putObject("old-folder/file.txt", "Hello");
+        putObject("existing-folder/file.txt", "World");
+
+        assertThrows(
+                ObjectAlreadyExistsException.class,
+                () -> fileStorageService.moveResource(
+                        "old-folder/",
+                        "existing-folder/"
+                )
+        );
+
+        assertTrue(isObjectExist("old-folder/file.txt"));
+        assertTrue(isObjectExist("existing-folder/file.txt"));
+    }
+
+    @WithMockUserDetails
+    @Test
+    void shouldAllowFileAndFolderWithSameName() {
+        putObject("documents/report", "Hello");
+        putFolder("documents/report/");
+
+        ResourceInfo fileInfo =
+                fileStorageService.getResourceInfo("documents/report");
+
+        ResourceInfo folderInfo =
+                fileStorageService.getResourceInfo("documents/report/");
+
+        assertEquals(
+                new ResourceInfo(
+                        "documents/",
+                        "report",
+                        5L,
+                        ResourceType.FILE
+                ),
+                fileInfo
+        );
+
+        assertEquals(
+                new ResourceInfo(
+                        "documents/",
+                        "report",
+                        null,
+                        ResourceType.DIRECTORY
+                ),
+                folderInfo
+        );
+    }
+
+
 }

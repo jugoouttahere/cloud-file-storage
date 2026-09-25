@@ -46,9 +46,24 @@ public abstract class MinioIntegrationTest extends IntegrationTest {
         minioClient.putObject(
                 PutObjectArgs.builder()
                         .bucket("cloud-storage")
-                        .object(objectKey)
+                        .object("user-1-files/" + objectKey)
                         .stream(new ByteArrayInputStream(bytes), bytes.length, -1)
                         .contentType("text/plain")
+                        .build()
+        );
+    }
+
+    @SneakyThrows
+    protected void putFolder(String folderKey) {
+        minioClient.putObject(
+                PutObjectArgs.builder()
+                        .bucket("cloud-storage")
+                        .object("user-1-files/" + folderKey)
+                        .stream(
+                                new ByteArrayInputStream(new byte[0]),
+                                0,
+                                -1
+                        )
                         .build()
         );
     }
@@ -59,7 +74,7 @@ public abstract class MinioIntegrationTest extends IntegrationTest {
             minioClient.statObject(
                     StatObjectArgs.builder()
                             .bucket("cloud-storage")
-                            .object(objectKey)
+                            .object("user-1-files/" + objectKey)
                             .build()
             );
             return true;

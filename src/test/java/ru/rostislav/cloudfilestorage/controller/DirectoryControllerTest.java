@@ -3,9 +3,9 @@ package ru.rostislav.cloudfilestorage.controller;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.rostislav.cloudfilestorage.integration.MinioIntegrationTest;
+import ru.rostislav.cloudfilestorage.security.WithMockUserDetails;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
@@ -20,7 +20,7 @@ public class DirectoryControllerTest extends MinioIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldReturn404WhenDirectoryDoesNotExist() throws Exception {
         mockMvc.perform(
@@ -42,7 +42,7 @@ public class DirectoryControllerTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldReturnDirectoryContent() {
         putObject("folder/file1.txt", "Hello");
@@ -79,7 +79,7 @@ public class DirectoryControllerTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldCreateEmptyDirectory() {
         mockMvc.perform(
@@ -87,7 +87,7 @@ public class DirectoryControllerTest extends MinioIntegrationTest {
                                 .param("path", "folder/")
                 )
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.path").value("/"))
                 .andExpect(jsonPath("$.name").value("folder"))
                 .andExpect(jsonPath("$.type").value("DIRECTORY"))
                 .andExpect(jsonPath("$.size").doesNotExist());
@@ -96,7 +96,7 @@ public class DirectoryControllerTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldReturn404WhenParentDirectoryDoesNotExist() {
         mockMvc.perform(
@@ -107,7 +107,7 @@ public class DirectoryControllerTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldReturn409WhenDirectoryAlreadyExists() {
         putObject("folder/file.txt", "");

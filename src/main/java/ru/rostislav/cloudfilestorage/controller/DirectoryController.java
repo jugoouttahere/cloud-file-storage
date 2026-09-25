@@ -17,7 +17,6 @@ import java.util.List;
 public class DirectoryController {
 
     private final FileStorageService fileStorageService;
-
     private final ResourceMapper resourceMapper;
 
     @GetMapping
@@ -26,7 +25,8 @@ public class DirectoryController {
     ) {
         List<ResourceInfo> infos = fileStorageService.getDirectoryContent(path);
         return ResponseEntity
-                .ok(resourceMapper.toResponseList(infos));
+                .status(HttpStatus.OK)
+                .body(resourceMapper.toResponseList(infos));
     }
 
     @PostMapping
@@ -34,7 +34,6 @@ public class DirectoryController {
             @RequestParam String path
     ) {
         ResourceInfo info = fileStorageService.createEmptyFolder(path);
-
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(resourceMapper.toResponse(info));

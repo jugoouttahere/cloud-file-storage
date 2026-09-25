@@ -10,7 +10,7 @@ import ru.rostislav.cloudfilestorage.dto.storage.StorageObject;
 public class StorageMapper {
 
     public StorageObject toStorageObject(Item item) {
-        if (item.isDir()) {
+        if (item.objectName().endsWith("/")) {
             return new StorageObject(
                     item.objectName(),
                     null,

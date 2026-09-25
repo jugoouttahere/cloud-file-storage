@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.rostislav.cloudfilestorage.dto.ErrorResponse;
 import ru.rostislav.cloudfilestorage.exception.EmptyFileException;
+import ru.rostislav.cloudfilestorage.exception.InvalidPathException;
 import ru.rostislav.cloudfilestorage.exception.auth.InvalidCredentialsException;
 import ru.rostislav.cloudfilestorage.exception.auth.UserAlreadyExistsException;
 import ru.rostislav.cloudfilestorage.exception.minio.*;
@@ -39,8 +40,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleUnknown(Exception exception) {
-        ErrorResponse errorResponse = new ErrorResponse(exception.getMessage());
+    public ResponseEntity<ErrorResponse> handleUnknown() {
+        ErrorResponse errorResponse = new ErrorResponse("Oops... Something goes wrong");
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(errorResponse);
@@ -70,13 +71,19 @@ public class GlobalExceptionHandler {
                 .body(errorResponse);
     }
 
-    @ExceptionHandler({
-            ObjectOperationException.class
-    })
+    @ExceptionHandler(ObjectOperationException.class)
     public ResponseEntity<ErrorResponse> handleObjectOperation(ObjectOperationException exception) {
         ErrorResponse errorResponse = new ErrorResponse(exception.getMessage());
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(errorResponse);
+    }
+
+    @ExceptionHandler(InvalidPathException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPath(InvalidPathException exception) {
+        ErrorResponse errorResponse = new ErrorResponse(exception.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
                 .body(errorResponse);
     }
 }

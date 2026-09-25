@@ -7,8 +7,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import ru.rostislav.cloudfilestorage.entity.User;
 import ru.rostislav.cloudfilestorage.repository.UserRepository;
-
-import java.util.List;
+import ru.rostislav.cloudfilestorage.security.UserDetailsImpl;
 
 @RequiredArgsConstructor
 @Service
@@ -20,10 +19,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
-        return new org.springframework.security.core.userdetails.User(
+        return new UserDetailsImpl(
+                user.getId(),
                 user.getUsername(),
-                user.getPassword(),
-                List.of()
+                user.getPassword()
         );
     }
 }

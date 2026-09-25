@@ -5,10 +5,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import ru.rostislav.cloudfilestorage.integration.MinioIntegrationTest;
+import ru.rostislav.cloudfilestorage.security.WithMockUserDetails;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -28,7 +28,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     private MockMvc mockMvc;
 
     @SneakyThrows
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldReturnResourceInfo() {
         putObject("hello.txt", "Hello MinIO");
@@ -37,14 +37,14 @@ public class ResourceControllerTest extends MinioIntegrationTest {
                                 .param("path", "hello.txt")
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.path").value("/"))
                 .andExpect(jsonPath("$.name").value("hello.txt"))
                 .andExpect(jsonPath("$.size").value(11))
                 .andExpect(jsonPath("$.type").value("FILE"));
     }
 
     @SneakyThrows
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldReturn404WhenResourceDoesNotExist() {
         mockMvc.perform(
@@ -56,7 +56,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldUploadFiles() {
         MockMultipartFile file1 = new MockMultipartFile(
@@ -92,7 +92,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldDeleteResource() {
         putObject("hello.txt", "Hello MinIO");
@@ -106,7 +106,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
         assertFalse(isObjectExist("hello.txt"));
     }
 
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldReturn404WhenDeletingMissingResource() throws Exception {
         mockMvc.perform(
@@ -128,7 +128,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldDownloadFile() {
         String expected = "Hello MinIO";
@@ -147,7 +147,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldDownloadFolderAsZip() {
         putObject("folder/file1.txt", "Hello");
@@ -188,7 +188,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
         assertEquals("MinIO", files.get("inner/file3.txt"));
     }
 
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldReturn404WhenDownloadingMissingResource() throws Exception {
         mockMvc.perform(
@@ -200,7 +200,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
                         .value("Resource not found: missing.txt"));
     }
 
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldReturn404WhenDownloadingMissingFolder() throws Exception {
         mockMvc.perform(
@@ -220,7 +220,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldMoveFile() {
         putObject("hello.txt", "Hello");
@@ -230,7 +230,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
                                 .param("to", "new-hello.txt")
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.path").value(""))
+                .andExpect(jsonPath("$.path").value("/"))
                 .andExpect(jsonPath("$.name").value("new-hello.txt"))
                 .andExpect(jsonPath("$.size").value(5))
                 .andExpect(jsonPath("$.type").value("FILE"));
@@ -240,7 +240,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldMoveFolder() {
         putObject("folder/file1.txt", "Hello");
@@ -264,7 +264,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldReturn404WhenMovingMissingFile() {
         mockMvc.perform(
@@ -278,7 +278,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldReturn404WhenMovingMissingFolder() {
         mockMvc.perform(
@@ -290,7 +290,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldReturn409WhenMovingFileToExistingPath() {
         putObject("hello.txt", "Hello");
@@ -305,7 +305,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     }
 
     @SneakyThrows
-    @WithMockUser
+    @WithMockUserDetails
     @Test
     void shouldReturn409WhenMovingFolderToExistingPath() {
         putObject("folder/file.txt", "Hello");
