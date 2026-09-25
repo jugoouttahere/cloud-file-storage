@@ -1,4 +1,4 @@
-package ru.rostislav.cloudfilestorage.config;
+package ru.rostislav.cloudfilestorage.security.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,7 +42,7 @@ public class JsonAuthenticationConverter implements AuthenticationConverter {
             );
 
         } catch (IOException e) {
-            throw new InvalidAuthenticationRequestException("Authentication failure", e);
+            throw new InvalidAuthenticationRequestException("Invalid JSON", e);
         }
     }
 }

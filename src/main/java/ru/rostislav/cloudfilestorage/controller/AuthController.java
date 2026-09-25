@@ -1,17 +1,13 @@
 package ru.rostislav.cloudfilestorage.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
-import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import ru.rostislav.cloudfilestorage.dto.auth.UserRequest;
 import ru.rostislav.cloudfilestorage.dto.auth.UserResponse;
 import ru.rostislav.cloudfilestorage.service.AuthService;
@@ -22,7 +18,6 @@ import ru.rostislav.cloudfilestorage.service.AuthService;
 public class AuthController {
 
     private final AuthService authService;
-    private final SecurityContextRepository securityContextRepository;
 
     @PostMapping("/sign-up")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody UserRequest userRequest) {
@@ -32,48 +27,4 @@ public class AuthController {
                 .body(registeredUser);
     }
 
-    @PostMapping("/sign-in")
-    public ResponseEntity<UserResponse> login(
-            @Valid @RequestBody UserRequest userRequest,
-            HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse
-    ) {
-        Authentication authentication = authService.authenticate(userRequest);
-
-        //TODO Remove by add AuthenticationFilter/UsernamePasswordAuthenticationFilter/basic Spring Security flow
-        httpRequest.getSession();
-        httpRequest.changeSessionId();
-
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
-
-        SecurityContextHolder.setContext(context);
-
-        securityContextRepository.saveContext(
-                context,
-                httpRequest,
-                httpResponse
-        );
-
-        UserResponse loggedUser = new UserResponse(authentication.getName());
-
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(loggedUser);
-    }
-
-    @PostMapping("/sign-out")
-    public ResponseEntity<Void> logout(
-            HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse,
-            Authentication authentication
-    ) {
-        SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
-
-        logoutHandler.logout(httpRequest, httpResponse, authentication);
-
-        return ResponseEntity
-                .status(HttpStatus.NO_CONTENT)
-                .build();
-    }
 }
