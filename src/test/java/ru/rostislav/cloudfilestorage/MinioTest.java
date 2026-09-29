@@ -17,7 +17,7 @@ public class MinioTest extends MinioIntegrationTest {
     @Test
     void shouldReturnTrueWhenBucketExists() {
         assertTrue(minioClient.bucketExists(BucketExistsArgs.builder()
-                .bucket("cloud-storage")
+                .bucket("user-files")
                 .build()));
     }
 
@@ -32,7 +32,7 @@ public class MinioTest extends MinioIntegrationTest {
 
         GetObjectResponse getObjectResponse = minioClient.getObject(
                 GetObjectArgs.builder()
-                        .bucket("cloud-storage")
+                        .bucket("user-files")
                         .object("user-1-files/hello.txt")
                         .build()
         );

@@ -24,7 +24,7 @@ public class DirectoryControllerTest extends MinioIntegrationTest {
     @Test
     void shouldReturn404WhenDirectoryDoesNotExist() throws Exception {
         mockMvc.perform(
-                        get("/directory")
+                        get("/api/directory")
                                 .param("path", "missing/")
                 )
                 .andExpect(status().isNotFound())
@@ -35,7 +35,7 @@ public class DirectoryControllerTest extends MinioIntegrationTest {
     @Test
     void shouldReturn401WhenGettingDirectoryWithoutAuthentication() throws Exception {
         mockMvc.perform(
-                        get("/directory")
+                        get("/api/directory")
                                 .param("path", "folder/")
                 )
                 .andExpect(status().isUnauthorized());
@@ -50,7 +50,7 @@ public class DirectoryControllerTest extends MinioIntegrationTest {
         putObject("folder/inner/file3.txt", "MinIO");
 
         mockMvc.perform(
-                        get("/directory")
+                        get("/api/directory")
                                 .param("path", "folder/")
                 )
                 .andExpect(status().isOk())
@@ -83,7 +83,7 @@ public class DirectoryControllerTest extends MinioIntegrationTest {
     @Test
     void shouldCreateEmptyDirectory() {
         mockMvc.perform(
-                        post("/directory")
+                        post("/api/directory")
                                 .param("path", "folder/")
                 )
                 .andExpect(status().isCreated())
@@ -100,7 +100,7 @@ public class DirectoryControllerTest extends MinioIntegrationTest {
     @Test
     void shouldReturn404WhenParentDirectoryDoesNotExist() {
         mockMvc.perform(
-                        post("/directory")
+                        post("/api/directory")
                                 .param("path", "missing/inner/")
                 )
                 .andExpect(status().isNotFound());
@@ -113,7 +113,7 @@ public class DirectoryControllerTest extends MinioIntegrationTest {
         putObject("folder/file.txt", "");
 
         mockMvc.perform(
-                        post("/directory")
+                        post("/api/directory")
                                 .param("path", "folder/")
                 )
                 .andExpect(status().isConflict());
@@ -122,7 +122,7 @@ public class DirectoryControllerTest extends MinioIntegrationTest {
     @Test
     void shouldReturn401WhenCreatingDirectoryWithoutAuthentication() throws Exception {
         mockMvc.perform(
-                        post("/directory")
+                        post("/api/directory")
                                 .param("path", "folder/")
                 )
                 .andExpect(status().isUnauthorized());

@@ -33,7 +33,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     void shouldReturnResourceInfo() {
         putObject("hello.txt", "Hello MinIO");
         mockMvc.perform(
-                        get("/resource")
+                        get("/api/resource")
                                 .param("path", "hello.txt")
                 )
                 .andExpect(status().isOk())
@@ -48,7 +48,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     @Test
     void shouldReturn404WhenResourceDoesNotExist() {
         mockMvc.perform(
-                        get("/resource")
+                        get("/api/resource")
                                 .param("path", "missing.txt")
                 )
                 .andExpect(status().isNotFound())
@@ -74,7 +74,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
         );
 
         mockMvc.perform(
-                        multipart("/resource")
+                        multipart("/api/resource")
                                 .file(file1)
                                 .file(file2)
                                 .param("path", "storage/")
@@ -98,7 +98,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
         putObject("hello.txt", "Hello MinIO");
 
         mockMvc.perform(
-                        delete("/resource")
+                        delete("/api/resource")
                                 .param("path", "hello.txt")
                 )
                 .andExpect(status().isNoContent());
@@ -110,7 +110,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     @Test
     void shouldReturn404WhenDeletingMissingResource() throws Exception {
         mockMvc.perform(
-                        delete("/resource")
+                        delete("/api/resource")
                                 .param("path", "missing.txt")
                 )
                 .andExpect(status().isNotFound())
@@ -121,7 +121,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     @Test
     void shouldReturn401WhenDeletingResourceWithoutAuthentication() throws Exception {
         mockMvc.perform(
-                        delete("/resource")
+                        delete("/api/resource")
                                 .param("path", "hello.txt")
                 )
                 .andExpect(status().isUnauthorized());
@@ -136,7 +136,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
         putObject("hello.txt", expected);
 
         mockMvc.perform(
-                        get("/resource/download")
+                        get("/api/resource/download")
                                 .param("path", "hello.txt")
                 )
                 .andExpect(status().isOk())
@@ -155,7 +155,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
         putObject("folder/inner/file3.txt", "MinIO");
 
         MvcResult result = mockMvc.perform(
-                        get("/resource/download")
+                        get("/api/resource/download")
                                 .param("path", "folder/")
                 )
                 .andExpect(status().isOk())
@@ -192,7 +192,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     @Test
     void shouldReturn404WhenDownloadingMissingResource() throws Exception {
         mockMvc.perform(
-                        get("/resource/download")
+                        get("/api/resource/download")
                                 .param("path", "missing.txt")
                 )
                 .andExpect(status().isNotFound())
@@ -204,7 +204,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     @Test
     void shouldReturn404WhenDownloadingMissingFolder() throws Exception {
         mockMvc.perform(
-                        get("/resource/download")
+                        get("/api/resource/download")
                                 .param("path", "missing/")
                 )
                 .andExpect(status().isNotFound());
@@ -213,7 +213,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     @Test
     void shouldReturn401WhenDownloadingResourceWithoutAuthentication() throws Exception {
         mockMvc.perform(
-                        get("/resource/download")
+                        get("/api/resource/download")
                                 .param("path", "hello.txt")
                 )
                 .andExpect(status().isUnauthorized());
@@ -225,7 +225,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     void shouldMoveFile() {
         putObject("hello.txt", "Hello");
         mockMvc.perform(
-                        post("/resource/move")
+                        post("/api/resource/move")
                                 .param("from", "hello.txt")
                                 .param("to", "new-hello.txt")
                 )
@@ -248,7 +248,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
         putObject("folder/inner/file3.txt", "MinIO");
 
         mockMvc.perform(
-                        post("/resource/move")
+                        post("/api/resource/move")
                                 .param("from", "folder/")
                                 .param("to", "new-folder/")
                 )
@@ -268,7 +268,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     @Test
     void shouldReturn404WhenMovingMissingFile() {
         mockMvc.perform(
-                        post("/resource/move")
+                        post("/api/resource/move")
                                 .param("from", "missing.txt")
                                 .param("to", "new-file.txt")
                 )
@@ -282,7 +282,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     @Test
     void shouldReturn404WhenMovingMissingFolder() {
         mockMvc.perform(
-                        post("/resource/move")
+                        post("/api/resource/move")
                                 .param("from", "missing/")
                                 .param("to", "new-folder/")
                 )
@@ -297,7 +297,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
         putObject("new-hello.txt", "World");
 
         mockMvc.perform(
-                        post("/resource/move")
+                        post("/api/resource/move")
                                 .param("from", "hello.txt")
                                 .param("to", "new-hello.txt")
                 )
@@ -312,7 +312,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
         putObject("new-folder/file.txt", "World");
 
         mockMvc.perform(
-                        post("/resource/move")
+                        post("/api/resource/move")
                                 .param("from", "folder/")
                                 .param("to", "new-folder/")
                 )
@@ -323,7 +323,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     @Test
     void shouldReturn401WhenMovingResourceWithoutAuthentication() {
         mockMvc.perform(
-                        post("/resource/move")
+                        post("/api/resource/move")
                                 .param("from", "hello.txt")
                                 .param("to", "new-hello.txt")
                 )

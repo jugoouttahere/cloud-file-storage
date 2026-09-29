@@ -12,7 +12,7 @@ import ru.rostislav.cloudfilestorage.service.FileStorageService;
 import java.util.List;
 
 @RequiredArgsConstructor
-@RequestMapping("/directory")
+@RequestMapping("/api/directory")
 @RestController
 public class DirectoryController {
 

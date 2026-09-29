@@ -41,7 +41,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
 
         GetObjectResponse getObjectResponse = minioClient.getObject(
                 GetObjectArgs.builder()
-                        .bucket("cloud-storage")
+                        .bucket("user-files")
                         .object("user-1-files/new-hello.txt")
                         .build()
         );
@@ -99,7 +99,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
 
         GetObjectResponse getObjectResponse = minioClient.getObject(
                 GetObjectArgs.builder()
-                        .bucket("cloud-storage")
+                        .bucket("user-files")
                         .object("user-1-files/hello.txt")
                         .build()
         );
@@ -138,14 +138,14 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
 
         GetObjectResponse responseFile1 = minioClient.getObject(
                 GetObjectArgs.builder()
-                        .bucket("cloud-storage")
+                        .bucket("user-files")
                         .object("user-1-files/hello.txt")
                         .build()
         );
 
         GetObjectResponse responseFile2 = minioClient.getObject(
                 GetObjectArgs.builder()
-                        .bucket("cloud-storage")
+                        .bucket("user-files")
                         .object("user-1-files/world.txt")
                         .build()
         );
@@ -218,21 +218,21 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
 
         GetObjectResponse responseFile1 = minioClient.getObject(
                 GetObjectArgs.builder()
-                        .bucket("cloud-storage")
+                        .bucket("user-files")
                         .object("user-1-files/storage/test1.txt")
                         .build()
         );
 
         GetObjectResponse responseFile2 = minioClient.getObject(
                 GetObjectArgs.builder()
-                        .bucket("cloud-storage")
+                        .bucket("user-files")
                         .object("user-1-files/storage/folder/test2.txt")
                         .build()
         );
 
         GetObjectResponse responseFile3 = minioClient.getObject(
                 GetObjectArgs.builder()
-                        .bucket("cloud-storage")
+                        .bucket("user-files")
                         .object("user-1-files/storage/folder/inner/test3.txt")
                         .build()
         );

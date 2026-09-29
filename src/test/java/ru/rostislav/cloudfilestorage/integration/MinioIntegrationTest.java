@@ -26,13 +26,13 @@ public abstract class MinioIntegrationTest extends IntegrationTest {
     void cleanBucket() throws Exception {
         for (Result<Item> result : minioClient.listObjects(
                 ListObjectsArgs.builder()
-                        .bucket("cloud-storage")
+                        .bucket("user-files")
                         .recursive(true)
                         .build())) {
 
             minioClient.removeObject(
                     RemoveObjectArgs.builder()
-                            .bucket("cloud-storage")
+                            .bucket("user-files")
                             .object(result.get().objectName())
                             .build()
             );
@@ -45,7 +45,7 @@ public abstract class MinioIntegrationTest extends IntegrationTest {
 
         minioClient.putObject(
                 PutObjectArgs.builder()
-                        .bucket("cloud-storage")
+                        .bucket("user-files")
                         .object("user-1-files/" + objectKey)
                         .stream(new ByteArrayInputStream(bytes), bytes.length, -1)
                         .contentType("text/plain")
@@ -57,7 +57,7 @@ public abstract class MinioIntegrationTest extends IntegrationTest {
     protected void putFolder(String folderKey) {
         minioClient.putObject(
                 PutObjectArgs.builder()
-                        .bucket("cloud-storage")
+                        .bucket("user-files")
                         .object("user-1-files/" + folderKey)
                         .stream(
                                 new ByteArrayInputStream(new byte[0]),
@@ -73,7 +73,7 @@ public abstract class MinioIntegrationTest extends IntegrationTest {
         try {
             minioClient.statObject(
                     StatObjectArgs.builder()
-                            .bucket("cloud-storage")
+                            .bucket("user-files")
                             .object("user-1-files/" + objectKey)
                             .build()
             );

@@ -60,6 +60,9 @@ public class FileStorageService {
     public void renameFile(String oldObjectKey, String newObjectKey) {
         validatePath(oldObjectKey);
         validatePath(newObjectKey);
+        if (pathValidator.isFolderPath(newObjectKey)) {
+            throw new InvalidPathException(newObjectKey);
+        }
         checkObjectExists(oldObjectKey);
         checkObjectNotExists(newObjectKey);
         minioService.copyObject(pathUtil.getStoragePath(oldObjectKey, getUserId()), pathUtil.getStoragePath(newObjectKey, getUserId()));

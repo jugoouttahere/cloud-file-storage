@@ -3,6 +3,7 @@ package ru.rostislav.cloudfilestorage.controller.advice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.rostislav.cloudfilestorage.dto.ErrorResponse;
@@ -81,6 +82,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidPathException.class)
     public ResponseEntity<ErrorResponse> handleInvalidPath(InvalidPathException exception) {
+        ErrorResponse errorResponse = new ErrorResponse(exception.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(errorResponse);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingServletRequestParameter (MissingServletRequestParameterException exception) {
         ErrorResponse errorResponse = new ErrorResponse(exception.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)

@@ -17,7 +17,7 @@ import java.io.InputStream;
 import java.util.List;
 
 @RequiredArgsConstructor
-@RequestMapping("/resource")
+@RequestMapping("/api/resource")
 @RestController
 public class ResourceController {
 
