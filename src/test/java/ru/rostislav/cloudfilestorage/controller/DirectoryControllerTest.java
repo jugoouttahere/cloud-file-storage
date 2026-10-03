@@ -87,7 +87,7 @@ public class DirectoryControllerTest extends MinioIntegrationTest {
                                 .param("path", "folder/")
                 )
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.path").value("/"))
+                .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("folder"))
                 .andExpect(jsonPath("$.type").value("DIRECTORY"))
                 .andExpect(jsonPath("$.size").doesNotExist());

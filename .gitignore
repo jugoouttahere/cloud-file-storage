@@ -33,3 +33,8 @@ build/
 .vscode/
 
 .env
+
+cloud-storage-frontend/node_modules/
+cloud-storage-frontend/dist/
+cloud-storage-frontend/.env.gh-pages
+cloud-storage-frontend/.env.gh-pages-local

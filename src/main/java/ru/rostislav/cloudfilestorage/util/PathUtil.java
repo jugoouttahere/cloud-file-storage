@@ -37,6 +37,6 @@ public class PathUtil {
 
     public String extractPath(String objectKey) {
         int index = objectKey.lastIndexOf('/');
-        return index == -1 ? "/" : objectKey.substring(0, index + 1);
+        return index == -1 ? "" : objectKey.substring(0, index + 1);
     }
 }

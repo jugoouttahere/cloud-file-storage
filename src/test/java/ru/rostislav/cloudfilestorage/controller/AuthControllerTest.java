@@ -1,15 +1,15 @@
 package ru.rostislav.cloudfilestorage.controller;
 
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import ru.rostislav.cloudfilestorage.integration.IntegrationTest;
 import ru.rostislav.cloudfilestorage.entity.User;
+import ru.rostislav.cloudfilestorage.integration.IntegrationTest;
 import ru.rostislav.cloudfilestorage.repository.UserRepository;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -74,25 +74,26 @@ class AuthControllerTest extends IntegrationTest {
                 .andExpect(jsonPath("$.username").value("TestUsername"))
                 .andReturn();
 
-        MockHttpSession session = (MockHttpSession) mvcResult.getRequest().getSession();
-        assertNotNull(session);
+        Cookie sessionCookie = mvcResult.getResponse().getCookie("SESSION");
+
+        assertNotNull(sessionCookie);
 
         mockMvc.perform(
                         get("/api/user/me")
-                                .session(session)
+                                .cookie(sessionCookie)
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("TestUsername"));
 
         mockMvc.perform(
                         post("/api/auth/sign-out")
-                                .session(session)
+                                .cookie(sessionCookie)
                 )
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(
                         get("/api/user/me")
-                                .session(session)
+                                .cookie(sessionCookie)
                 )
                 .andExpect(status().isUnauthorized());
     }

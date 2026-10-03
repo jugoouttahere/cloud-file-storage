@@ -80,7 +80,7 @@ public class ResourceController {
 
     @PostMapping
     public ResponseEntity<List<ResourceResponse>> uploadResource(
-            @RequestParam List<MultipartFile> files,
+            @RequestParam("object") List<MultipartFile> files,
             @RequestParam String path
     ) {
         List<ResourceInfo> infos = fileStorageService.uploadFiles(path, files);

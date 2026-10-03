@@ -37,7 +37,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
                                 .param("path", "hello.txt")
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.path").value("/"))
+                .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("hello.txt"))
                 .andExpect(jsonPath("$.size").value(11))
                 .andExpect(jsonPath("$.type").value("FILE"));
@@ -230,7 +230,7 @@ public class ResourceControllerTest extends MinioIntegrationTest {
                                 .param("to", "new-hello.txt")
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.path").value("/"))
+                .andExpect(jsonPath("$.path").value(""))
                 .andExpect(jsonPath("$.name").value("new-hello.txt"))
                 .andExpect(jsonPath("$.size").value(5))
                 .andExpect(jsonPath("$.type").value("FILE"));

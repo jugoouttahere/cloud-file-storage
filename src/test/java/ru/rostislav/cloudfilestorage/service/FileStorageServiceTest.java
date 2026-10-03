@@ -166,7 +166,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
                 .findFirst()
                 .orElseThrow();
 
-        assertEquals("/", test1.path());
+        assertEquals("", test1.path());
         assertEquals("hello.txt", test1.name());
         assertEquals(5, test1.size());
         assertEquals(ResourceType.FILE, test1.type());
@@ -176,7 +176,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
                 .findFirst()
                 .orElseThrow();
 
-        assertEquals("/", test2.path());
+        assertEquals("", test2.path());
         assertEquals("world.txt", test2.name());
         assertEquals(5, test2.size());
         assertEquals(ResourceType.FILE, test2.type());
@@ -306,7 +306,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
 
         assertTrue(isObjectExist("folder/"));
 
-        assertEquals("/", result.path());
+        assertEquals("", result.path());
         assertEquals("folder", result.name());
         assertNull(result.size());
         assertEquals(ResourceType.DIRECTORY, result.type());
@@ -499,7 +499,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
 
         assertEquals(
                 new ResourceInfo(
-                        "/",
+                        "",
                         "folder",
                         null,
                         ResourceType.DIRECTORY
@@ -606,7 +606,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
 
         assertEquals(
                 new ResourceInfo(
-                        "/",
+                        "",
                         "new-folder",
                         null,
                         ResourceType.DIRECTORY

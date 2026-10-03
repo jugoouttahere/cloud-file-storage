@@ -186,6 +186,10 @@ public class FileStorageService {
         for (StorageObject object : minioService.getObjects(pathUtil.getStoragePath(normalizedPath, getUserId()), false)) {
             String objectKey = pathUtil.removeUserRootPath(object.objectKey(), getUserId());
 
+            if (objectKey.equals(normalizedPath)) {
+                continue;
+            }
+
             if (object.type() == ResourceType.DIRECTORY) {
                 String directoryPath = objectKey.substring(0, objectKey.length() - 1);
 
@@ -316,6 +320,9 @@ public class FileStorageService {
     }
 
     private void checkFolderExists(String folderPath) {
+        if (folderPath.isEmpty()) {
+            return;
+        }
         if (!minioService.isFolderExist(pathUtil.getStoragePath(folderPath, getUserId()))) {
             throw new ObjectNotFoundException(folderPath);
         }
