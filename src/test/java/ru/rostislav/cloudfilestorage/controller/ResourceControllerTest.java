@@ -60,14 +60,14 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     @Test
     void shouldUploadFiles() {
         MockMultipartFile file1 = new MockMultipartFile(
-                "files",
+                "object",
                 "hello.txt",
                 "text/plain",
                 "Hello".getBytes(StandardCharsets.UTF_8)
         );
 
         MockMultipartFile file2 = new MockMultipartFile(
-                "files",
+                "object",
                 "world.txt",
                 "text/plain",
                 "World".getBytes(StandardCharsets.UTF_8)

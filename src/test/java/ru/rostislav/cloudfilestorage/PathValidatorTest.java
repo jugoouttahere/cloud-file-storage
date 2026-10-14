@@ -8,85 +8,84 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PathValidatorTest {
 
-    PathValidator pathValidator = new PathValidator();
 
     @Test
     void shouldRejectParentDirectory() {
-        assertFalse(pathValidator.isValidPath("../file.txt"));
+        assertFalse(PathValidator.isValidPath("../file.txt"));
     }
 
     @Test
     void shouldRejectNestedParentDirectory() {
-        assertFalse(pathValidator.isValidPath("documents/../file.txt"));
+        assertFalse(PathValidator.isValidPath("documents/../file.txt"));
     }
 
     @Test
     void shouldRejectCurrentDirectory() {
-        assertFalse(pathValidator.isValidPath("./file.txt"));
+        assertFalse(PathValidator.isValidPath("./file.txt"));
     }
 
     @Test
     void shouldRejectNestedCurrentDirectory() {
-        assertFalse(pathValidator.isValidPath("documents/./file.txt"));
+        assertFalse(PathValidator.isValidPath("documents/./file.txt"));
     }
 
     @Test
     void shouldRejectBackslash() {
-        assertFalse(pathValidator.isValidPath("documents\\file.txt"));
+        assertFalse(PathValidator.isValidPath("documents\\file.txt"));
     }
 
     @Test
     void shouldRejectDoubleSlash() {
-        assertFalse(pathValidator.isValidPath("documents//file.txt"));
+        assertFalse(PathValidator.isValidPath("documents//file.txt"));
     }
 
     @Test
     void shouldRejectPathStartingWithSlash() {
-        assertFalse(pathValidator.isValidPath("/documents/file.txt"));
+        assertFalse(PathValidator.isValidPath("/documents/file.txt"));
     }
 
     @Test
     void shouldRejectBlankPath() {
-        assertFalse(pathValidator.isValidPath("   "));
+        assertFalse(PathValidator.isValidPath("   "));
     }
 
     @Test
     void shouldRejectNullPath() {
-        assertFalse(pathValidator.isValidPath(null));
+        assertFalse(PathValidator.isValidPath(null));
     }
 
     @Test
     void shouldAcceptRootPath() {
-        assertTrue(pathValidator.isValidPath(""));
+        assertTrue(PathValidator.isValidPath(""));
     }
 
     @Test
     void shouldAcceptFilePath() {
-        assertTrue(pathValidator.isValidPath("documents/file.txt"));
+        assertTrue(PathValidator.isValidPath("documents/file.txt"));
     }
 
     @Test
     void shouldAcceptFolderPath() {
-        assertTrue(pathValidator.isValidPath("documents/folder/"));
+        assertTrue(PathValidator.isValidPath("documents/folder/"));
     }
 
     @Test
     void shouldAcceptNestedPath() {
-        assertTrue(pathValidator.isValidPath("documents/projects/java/file.txt"));
+        assertTrue(PathValidator.isValidPath("documents/projects/java/file.txt"));
     }
 
     @Test
     void shouldRecognizeFolderPath() {
-        assertTrue(pathValidator.isFolderPath("documents/"));
+        assertTrue(PathValidator.isFolderPath("documents/"));
     }
 
     @Test
     void shouldRecognizeRootPathAsFolder() {
-        assertTrue(pathValidator.isFolderPath(""));
+        assertTrue(PathValidator.isFolderPath(""));
     }
 
     @Test
     void shouldRecognizeFilePathAsNotFolder() {
-        assertFalse(pathValidator.isFolderPath("documents/file.txt"));
+        assertFalse(PathValidator.isFolderPath("documents/file.txt"));
     }
 }

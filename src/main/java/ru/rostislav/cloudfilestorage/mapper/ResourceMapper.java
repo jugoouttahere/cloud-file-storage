@@ -1,15 +1,13 @@
 package ru.rostislav.cloudfilestorage.mapper;
 
-import org.springframework.stereotype.Component;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceInfo;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceResponse;
 
 import java.util.List;
 
-@Component
 public class ResourceMapper {
 
-    public ResourceResponse toResponse(ResourceInfo info) {
+    public static ResourceResponse toResponse(ResourceInfo info) {
         return new ResourceResponse(
                 info.path(),
                 info.name(),
@@ -18,9 +16,9 @@ public class ResourceMapper {
         );
     }
 
-    public List<ResourceResponse> toResponseList(List<ResourceInfo> infos) {
+    public static List<ResourceResponse> toResponseList(List<ResourceInfo> infos) {
         return infos.stream()
-                .map(this::toResponse)
+                .map(ResourceMapper::toResponse)
                 .toList();
     }
 }

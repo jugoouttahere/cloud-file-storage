@@ -2,14 +2,12 @@ package ru.rostislav.cloudfilestorage.mapper;
 
 import io.minio.StatObjectResponse;
 import io.minio.messages.Item;
-import org.springframework.stereotype.Component;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceType;
 import ru.rostislav.cloudfilestorage.dto.storage.StorageObject;
 
-@Component
 public class StorageMapper {
 
-    public StorageObject toStorageObject(Item item) {
+    public static StorageObject toStorageObject(Item item) {
         if (item.objectName().endsWith("/")) {
             return new StorageObject(
                     item.objectName(),
@@ -25,7 +23,7 @@ public class StorageMapper {
         }
     }
 
-    public StorageObject toStorageObject(StatObjectResponse statObjectResponse) {
+    public static StorageObject toStorageObject(StatObjectResponse statObjectResponse) {
         if (statObjectResponse.object().endsWith("/")) {
             return new StorageObject(
                     statObjectResponse.object(),

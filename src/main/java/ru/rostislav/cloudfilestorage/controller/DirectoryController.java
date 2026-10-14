@@ -2,7 +2,6 @@ package ru.rostislav.cloudfilestorage.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceInfo;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceResponse;
@@ -17,25 +16,22 @@ import java.util.List;
 public class DirectoryController {
 
     private final FileStorageService fileStorageService;
-    private final ResourceMapper resourceMapper;
 
     @GetMapping
-    public ResponseEntity<List<ResourceResponse>> getDirectory(
+    @ResponseStatus(HttpStatus.OK)
+    public List<ResourceResponse> getDirectory(
             @RequestParam String path
     ) {
         List<ResourceInfo> infos = fileStorageService.getDirectoryContent(path);
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(resourceMapper.toResponseList(infos));
+        return ResourceMapper.toResponseList(infos);
     }
 
     @PostMapping
-    public ResponseEntity<ResourceResponse> createDirectory(
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResourceResponse createDirectory(
             @RequestParam String path
     ) {
         ResourceInfo info = fileStorageService.createEmptyFolder(path);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(resourceMapper.toResponse(info));
+        return ResourceMapper.toResponse(info);
     }
 }

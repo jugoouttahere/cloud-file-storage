@@ -27,12 +27,10 @@ public class FileStorageService {
 
     private final MinioService minioService;
     private final ArchiveService archiveService;
-    private final PathUtil pathUtil;
-    private final PathValidator pathValidator;
 
     public List<ResourceInfo> uploadFiles(String path, List<MultipartFile> files) {
         validateFolderPath(path);
-        String normalizedPath = pathUtil.normalizeFolderPath(path);
+        String normalizedPath = PathUtil.normalizeFolderPath(path);
         List<ResourceInfo> infoList = new ArrayList<>();
         for (MultipartFile file : files) {
             String filename = file.getOriginalFilename();
@@ -42,7 +40,7 @@ public class FileStorageService {
             }
             String fullPath = normalizedPath + filename;
             checkObjectNotExists(fullPath);
-            minioService.putObject(file, pathUtil.getStoragePath(fullPath, getUserId()));
+            minioService.putObject(file, PathUtil.getStoragePath(fullPath, getUserId()));
             infoList.add(getResourceInfo(fullPath));
         }
         return infoList;
@@ -50,49 +48,49 @@ public class FileStorageService {
 
     public ResourceInfo createEmptyFolder(String folderName) {
         validateFolderPath(folderName);
-        String normalizedFolderKey = pathUtil.normalizeFolderPath(folderName);
+        String normalizedFolderKey = PathUtil.normalizeFolderPath(folderName);
         checkParentFolderExist(normalizedFolderKey);
         checkFolderNotExists(normalizedFolderKey);
-        minioService.putEmptyObject(pathUtil.getStoragePath(normalizedFolderKey, getUserId()));
+        minioService.putEmptyObject(PathUtil.getStoragePath(normalizedFolderKey, getUserId()));
         return getResourceInfo(normalizedFolderKey);
     }
 
     public void renameFile(String oldObjectKey, String newObjectKey) {
         validatePath(oldObjectKey);
         validatePath(newObjectKey);
-        if (pathValidator.isFolderPath(newObjectKey)) {
+        if (PathValidator.isFolderPath(newObjectKey)) {
             throw new InvalidPathException(newObjectKey);
         }
         checkObjectExists(oldObjectKey);
         checkObjectNotExists(newObjectKey);
-        minioService.copyObject(pathUtil.getStoragePath(oldObjectKey, getUserId()), pathUtil.getStoragePath(newObjectKey, getUserId()));
-        minioService.removeObject(pathUtil.getStoragePath(oldObjectKey, getUserId()));
+        minioService.copyObject(PathUtil.getStoragePath(oldObjectKey, getUserId()), PathUtil.getStoragePath(newObjectKey, getUserId()));
+        minioService.removeObject(PathUtil.getStoragePath(oldObjectKey, getUserId()));
     }
 
     public void renameFolder(String sourceFolder, String destFolder) {
         validateFolderPath(sourceFolder);
         validateFolderPath(destFolder);
 
-        String normalizedSourceFolder = pathUtil.normalizeFolderPath(sourceFolder);
-        String normalizedDestFolder = pathUtil.normalizeFolderPath(destFolder);
+        String normalizedSourceFolder = PathUtil.normalizeFolderPath(sourceFolder);
+        String normalizedDestFolder = PathUtil.normalizeFolderPath(destFolder);
 
         checkFolderExists(normalizedSourceFolder);
         checkFolderNotExists(normalizedDestFolder);
 
-        List<StorageObject> oldObjectList = minioService.getObjects(pathUtil.getStoragePath(normalizedSourceFolder, getUserId()), true);
+        List<StorageObject> oldObjectList = minioService.getObjects(PathUtil.getStoragePath(normalizedSourceFolder, getUserId()), true);
 
         for (StorageObject object : oldObjectList) {
-            String oldObjectKey = pathUtil.removeUserRootPath(object.objectKey(), getUserId());
+            String oldObjectKey = PathUtil.removeUserRootPath(object.objectKey(), getUserId());
             String relative = oldObjectKey.substring(normalizedSourceFolder.length());
             String newObjectKey = normalizedDestFolder + relative;
 
-            minioService.copyObject(pathUtil.getStoragePath(oldObjectKey, getUserId()), pathUtil.getStoragePath(newObjectKey, getUserId()));
+            minioService.copyObject(PathUtil.getStoragePath(oldObjectKey, getUserId()), PathUtil.getStoragePath(newObjectKey, getUserId()));
         }
 
         for (StorageObject object : oldObjectList) {
-            String oldObjectKey = pathUtil.removeUserRootPath(object.objectKey(), getUserId());
+            String oldObjectKey = PathUtil.removeUserRootPath(object.objectKey(), getUserId());
 
-            minioService.removeObject(pathUtil.getStoragePath(oldObjectKey, getUserId()));
+            minioService.removeObject(PathUtil.getStoragePath(oldObjectKey, getUserId()));
         }
     }
 
@@ -108,18 +106,18 @@ public class FileStorageService {
     public InputStream downloadFile(String objectKey) {
         validatePath(objectKey);
         checkObjectExists(objectKey);
-        return minioService.getObject(pathUtil.getStoragePath(objectKey, getUserId()));
+        return minioService.getObject(PathUtil.getStoragePath(objectKey, getUserId()));
     }
 
     public InputStream downloadFolder(String folderKey) {
         validateFolderPath(folderKey);
-        String normalizedFolderKey = pathUtil.normalizeFolderPath(folderKey);
+        String normalizedFolderKey = PathUtil.normalizeFolderPath(folderKey);
         checkFolderExists(normalizedFolderKey);
 
         List<ArchiveEntry> entries = new ArrayList<>();
 
-        for (StorageObject object : minioService.getObjects(pathUtil.getStoragePath(normalizedFolderKey, getUserId()), true)) {
-            String objectKey = pathUtil.removeUserRootPath(object.objectKey(), getUserId());
+        for (StorageObject object : minioService.getObjects(PathUtil.getStoragePath(normalizedFolderKey, getUserId()), true)) {
+            String objectKey = PathUtil.removeUserRootPath(object.objectKey(), getUserId());
             if (objectKey.equals(normalizedFolderKey)) {
                 continue;
             }
@@ -129,7 +127,7 @@ public class FileStorageService {
                 entries.add(new ArchiveEntry(
                         relativePath,
                         object.type(),
-                        minioService.getObject(pathUtil.getStoragePath(objectKey, getUserId()))
+                        minioService.getObject(PathUtil.getStoragePath(objectKey, getUserId()))
                 ));
             }
 
@@ -146,7 +144,7 @@ public class FileStorageService {
     }
 
     public InputStream downloadResource(String path) {
-        if (pathValidator.isFolderPath(path)) {
+        if (PathValidator.isFolderPath(path)) {
             return downloadFolder(path);
         } else {
             return downloadFile(path);
@@ -154,7 +152,7 @@ public class FileStorageService {
     }
 
     public void deleteResource(String path) {
-        if (pathValidator.isFolderPath(path)) {
+        if (PathValidator.isFolderPath(path)) {
             deleteFolder(path);
         } else {
             deleteFile(path);
@@ -164,13 +162,13 @@ public class FileStorageService {
     public void deleteFile(String objectKey) {
         validatePath(objectKey);
         checkObjectExists(objectKey);
-        minioService.removeObject(pathUtil.getStoragePath(objectKey, getUserId()));
+        minioService.removeObject(PathUtil.getStoragePath(objectKey, getUserId()));
     }
 
     public void deleteFolder(String path) {
         validateFolderPath(path);
         checkFolderExists(path);
-        List<StorageObject> objects = minioService.getObjects(pathUtil.getStoragePath(path, getUserId()), true);
+        List<StorageObject> objects = minioService.getObjects(PathUtil.getStoragePath(path, getUserId()), true);
         for (StorageObject object : objects) {
             minioService.removeObject(object.objectKey());
         }
@@ -178,13 +176,13 @@ public class FileStorageService {
 
     public List<ResourceInfo> getDirectoryContent(String path) {
         validateFolderPath(path);
-        String normalizedPath = pathUtil.normalizeFolderPath(path);
+        String normalizedPath = PathUtil.normalizeFolderPath(path);
         checkFolderExists(normalizedPath);
 
         List<ResourceInfo> infos = new ArrayList<>();
 
-        for (StorageObject object : minioService.getObjects(pathUtil.getStoragePath(normalizedPath, getUserId()), false)) {
-            String objectKey = pathUtil.removeUserRootPath(object.objectKey(), getUserId());
+        for (StorageObject object : minioService.getObjects(PathUtil.getStoragePath(normalizedPath, getUserId()), false)) {
+            String objectKey = PathUtil.removeUserRootPath(object.objectKey(), getUserId());
 
             if (objectKey.equals(normalizedPath)) {
                 continue;
@@ -194,8 +192,8 @@ public class FileStorageService {
                 String directoryPath = objectKey.substring(0, objectKey.length() - 1);
 
                 infos.add(new ResourceInfo(
-                        pathUtil.extractPath(directoryPath),
-                        pathUtil.extractName(directoryPath),
+                        PathUtil.extractPath(directoryPath),
+                        PathUtil.extractName(directoryPath),
                         null,
                         ResourceType.DIRECTORY
                 ));
@@ -203,8 +201,8 @@ public class FileStorageService {
 
             if (object.type() == ResourceType.FILE) {
                 infos.add(new ResourceInfo(
-                        pathUtil.extractPath(objectKey),
-                        pathUtil.extractName(objectKey),
+                        PathUtil.extractPath(objectKey),
+                        PathUtil.extractName(objectKey),
                         object.size(),
                         ResourceType.FILE
                 ));
@@ -215,7 +213,7 @@ public class FileStorageService {
     }
 
     public ResourceInfo getResourceInfo(String path) {
-        if (pathValidator.isFolderPath(path)) {
+        if (PathValidator.isFolderPath(path)) {
             return getFolderInfo(path);
         } else {
             return getFileInfo(path);
@@ -223,10 +221,10 @@ public class FileStorageService {
     }
 
     public List<ResourceInfo> searchResource(String query) {
-        List<StorageObject> objects = minioService.getObjects(pathUtil.getStoragePath("", getUserId()), true);
+        List<StorageObject> objects = minioService.getObjects(PathUtil.getStoragePath("", getUserId()), true);
         List<ResourceInfo> results = new ArrayList<>();
         for (StorageObject object : objects) {
-            String path = pathUtil.removeUserRootPath(object.objectKey(), getUserId());
+            String path = PathUtil.removeUserRootPath(object.objectKey(), getUserId());
             if (path.toLowerCase().contains(query.toLowerCase())) {
 
                 if (object.type() == ResourceType.DIRECTORY) {
@@ -234,8 +232,8 @@ public class FileStorageService {
 
                     results.add(
                             new ResourceInfo(
-                                    pathUtil.extractPath(directoryPath),
-                                    pathUtil.extractName(directoryPath),
+                                    PathUtil.extractPath(directoryPath),
+                                    PathUtil.extractName(directoryPath),
                                     null,
                                     object.type()
                             )
@@ -245,8 +243,8 @@ public class FileStorageService {
                 if (object.type() == ResourceType.FILE) {
                     results.add(
                             new ResourceInfo(
-                                    pathUtil.extractPath(path),
-                                    pathUtil.extractName(path),
+                                    PathUtil.extractPath(path),
+                                    PathUtil.extractName(path),
                                     object.size(),
                                     object.type()
                             )
@@ -262,12 +260,12 @@ public class FileStorageService {
 
         try {
             StorageObject object = minioService.getObjectStat(
-                    pathUtil.getStoragePath(path, getUserId())
+                    PathUtil.getStoragePath(path, getUserId())
             );
 
             return new ResourceInfo(
-                    pathUtil.extractPath(path),
-                    pathUtil.extractName(path),
+                    PathUtil.extractPath(path),
+                    PathUtil.extractName(path),
                     object.size(),
                     object.type()
             );
@@ -278,15 +276,15 @@ public class FileStorageService {
 
     private ResourceInfo getFolderInfo(String path) {
         validateFolderPath(path);
-        String normalizedPath = pathUtil.normalizeFolderPath(path);
+        String normalizedPath = PathUtil.normalizeFolderPath(path);
 
         checkFolderExists(normalizedPath);
 
         String directoryPath = normalizedPath.substring(0, normalizedPath.length() - 1);
 
         return new ResourceInfo(
-                pathUtil.extractPath(directoryPath),
-                pathUtil.extractName(directoryPath),
+                PathUtil.extractPath(directoryPath),
+                PathUtil.extractName(directoryPath),
                 null,
                 ResourceType.DIRECTORY
         );
@@ -302,19 +300,19 @@ public class FileStorageService {
     }
 
     private void checkObjectNotExists(String objectKey) {
-        if (minioService.isObjectExist(pathUtil.getStoragePath(objectKey, getUserId()))) {
+        if (minioService.isObjectExist(PathUtil.getStoragePath(objectKey, getUserId()))) {
             throw new ObjectAlreadyExistsException(objectKey);
         }
     }
 
     private void checkObjectExists(String oldObjectKey) {
-        if (!minioService.isObjectExist(pathUtil.getStoragePath(oldObjectKey, getUserId()))) {
+        if (!minioService.isObjectExist(PathUtil.getStoragePath(oldObjectKey, getUserId()))) {
             throw new ObjectNotFoundException(oldObjectKey);
         }
     }
 
     private void checkFolderNotExists(String folderPath) {
-        if (minioService.isFolderExist(pathUtil.getStoragePath(folderPath, getUserId()))) {
+        if (minioService.isFolderExist(PathUtil.getStoragePath(folderPath, getUserId()))) {
             throw new ObjectAlreadyExistsException(folderPath);
         }
     }
@@ -323,7 +321,7 @@ public class FileStorageService {
         if (folderPath.isEmpty()) {
             return;
         }
-        if (!minioService.isFolderExist(pathUtil.getStoragePath(folderPath, getUserId()))) {
+        if (!minioService.isFolderExist(PathUtil.getStoragePath(folderPath, getUserId()))) {
             throw new ObjectNotFoundException(folderPath);
         }
     }
@@ -335,7 +333,7 @@ public class FileStorageService {
     }
 
     private void validatePath(String path) {
-        if (!pathValidator.isValidPath(path)) {
+        if (!PathValidator.isValidPath(path)) {
             throw new InvalidPathException(path);
         }
     }
@@ -343,7 +341,7 @@ public class FileStorageService {
     private void validateFolderPath(String path) {
         validatePath(path);
 
-        if (!pathValidator.isFolderPath(path)) {
+        if (!PathValidator.isFolderPath(path)) {
             throw new InvalidPathException(path);
         }
     }

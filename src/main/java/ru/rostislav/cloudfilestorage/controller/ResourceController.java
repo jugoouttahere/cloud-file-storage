@@ -22,26 +22,22 @@ import java.util.List;
 public class ResourceController {
 
     private final FileStorageService fileStorageService;
-    private final ResourceMapper resourceMapper;
 
     @GetMapping
-    public ResponseEntity<ResourceResponse> getResourceInfo(
+    @ResponseStatus(HttpStatus.OK)
+    public ResourceResponse getResourceInfo(
             @RequestParam String path
     ) {
         ResourceInfo info = fileStorageService.getResourceInfo(path);
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(resourceMapper.toResponse(info));
+        return ResourceMapper.toResponse(info);
     }
 
     @DeleteMapping
-    public ResponseEntity<Void> deleteResource(
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteResource(
             @RequestParam String path
     ) {
         fileStorageService.deleteResource(path);
-        return ResponseEntity
-                .status(HttpStatus.NO_CONTENT)
-                .build();
     }
 
     @GetMapping("/download")
@@ -57,25 +53,22 @@ public class ResourceController {
     }
 
     @PostMapping("/move")
-    public ResponseEntity<ResourceResponse> moveResource(
+    @ResponseStatus(HttpStatus.OK)
+    public ResourceResponse moveResource(
             @RequestParam String from,
             @RequestParam String to
     ) {
         ResourceInfo info = fileStorageService.moveResource(from, to);
-        ResourceResponse response = resourceMapper.toResponse(info);
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(response);
+        return ResourceMapper.toResponse(info);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<ResourceResponse>> searchResource(
+    @ResponseStatus(HttpStatus.OK)
+    public List<ResourceResponse> searchResource(
             @RequestParam String query
     ) {
         List<ResourceInfo> infos = fileStorageService.searchResource(query);
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(resourceMapper.toResponseList(infos));
+        return ResourceMapper.toResponseList(infos);
     }
 
     @PostMapping
@@ -86,7 +79,7 @@ public class ResourceController {
         List<ResourceInfo> infos = fileStorageService.uploadFiles(path, files);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(resourceMapper.toResponseList(infos));
+                .body(ResourceMapper.toResponseList(infos));
     }
 
 }

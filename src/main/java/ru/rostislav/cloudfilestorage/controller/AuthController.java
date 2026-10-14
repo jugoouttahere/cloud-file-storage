@@ -3,11 +3,7 @@ package ru.rostislav.cloudfilestorage.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.rostislav.cloudfilestorage.dto.auth.UserRequest;
 import ru.rostislav.cloudfilestorage.dto.auth.UserResponse;
 import ru.rostislav.cloudfilestorage.service.AuthService;
@@ -20,11 +16,11 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/sign-up")
-    public ResponseEntity<UserResponse> register(@Valid @RequestBody UserRequest userRequest) {
-        UserResponse registeredUser = authService.register(userRequest);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(registeredUser);
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserResponse register(
+            @Valid @RequestBody UserRequest userRequest
+    ) {
+        return authService.register(userRequest);
     }
 
 }

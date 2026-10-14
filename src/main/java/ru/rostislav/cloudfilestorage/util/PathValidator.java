@@ -1,11 +1,8 @@
 package ru.rostislav.cloudfilestorage.util;
 
-import org.springframework.stereotype.Component;
-
-@Component
 public class PathValidator {
 
-    public boolean isValidPath(String path) {
+    public static boolean isValidPath(String path) {
         if (path == null) {
             return false;
         }
@@ -16,9 +13,9 @@ public class PathValidator {
 
         if (
                 path.isBlank() ||
-                path.startsWith("/") ||
-                path.contains("\\") ||
-                path.contains("//")
+                        path.startsWith("/") ||
+                        path.contains("\\") ||
+                        path.contains("//")
         ) {
             return false;
         }
@@ -32,7 +29,7 @@ public class PathValidator {
         return true;
     }
 
-    public boolean isFolderPath(String path) {
+    public static boolean isFolderPath(String path) {
         return path != null && (path.isEmpty() || path.endsWith("/"));
     }
 }

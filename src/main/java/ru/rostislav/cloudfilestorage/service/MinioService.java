@@ -23,7 +23,7 @@ public class MinioService {
 
     private final MinioClient minioClient;
     private final MinioProperties properties;
-    private final StorageMapper storageMapper;
+    private final String noKey = "NoSuchKey";
 
     public void putObject(MultipartFile file, String objectKey) {
         try {
@@ -71,7 +71,7 @@ public class MinioService {
                             .build()
             );
         } catch (ErrorResponseException e) {
-            if ("NoSuchKey".equals(e.errorResponse().code())) {
+            if (noKey.equals(e.errorResponse().code())) {
                 throw new ObjectNotFoundException(objectKey);
             }
             throw new ObjectOperationException(objectKey, "get", e);
@@ -119,9 +119,9 @@ public class MinioService {
                             .object(objectKey)
                             .build()
             );
-            return storageMapper.toStorageObject(stat);
+            return StorageMapper.toStorageObject(stat);
         } catch (ErrorResponseException e) {
-            if ("NoSuchKey".equals(e.errorResponse().code())) {
+            if (noKey.equals(e.errorResponse().code())) {
                 throw new ObjectNotFoundException(objectKey);
             }
             throw new ObjectOperationException(objectKey, "stat", e);
@@ -140,7 +140,7 @@ public class MinioService {
             );
             return true;
         } catch (ErrorResponseException e) {
-            if ("NoSuchKey".equals(e.errorResponse().code())) {
+            if (noKey.equals(e.errorResponse().code())) {
                 return false;
             }
             throw new ObjectOperationException(objectKey, "check", e);
@@ -163,7 +163,7 @@ public class MinioService {
 
             for (Result<Item> object : results) {
                 Item item = object.get();
-                objectList.add(storageMapper.toStorageObject(item));
+                objectList.add(StorageMapper.toStorageObject(item));
             }
         } catch (Exception e) {
             throw new ObjectOperationException(path, "get objects", e);
