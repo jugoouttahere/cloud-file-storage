@@ -1,19 +1,18 @@
 package ru.rostislav.cloudfilestorage.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+import ru.rostislav.cloudfilestorage.controller.upload.UploadHandler;
+import ru.rostislav.cloudfilestorage.dto.resource.DownloadResult;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceInfo;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceResponse;
 import ru.rostislav.cloudfilestorage.mapper.ResourceMapper;
 import ru.rostislav.cloudfilestorage.service.FileStorageService;
 
-import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -22,6 +21,7 @@ import java.util.List;
 public class ResourceController {
 
     private final FileStorageService fileStorageService;
+    private final UploadHandler uploadHandler;
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
@@ -41,15 +41,18 @@ public class ResourceController {
     }
 
     @GetMapping("/download")
-    public ResponseEntity<Resource> downloadResource(
+    public ResponseEntity<StreamingResponseBody> downloadResource(
             @RequestParam String path
     ) {
-        InputStream inputStream = fileStorageService.downloadResource(path);
-        Resource resource = new InputStreamResource(inputStream);
+        DownloadResult result = fileStorageService.downloadResource(path);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(resource);
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(result.filename(), StandardCharsets.UTF_8)
+                                .build().toString())
+                .body(result.body());
     }
 
     @PostMapping("/move")
@@ -73,10 +76,10 @@ public class ResourceController {
 
     @PostMapping
     public ResponseEntity<List<ResourceResponse>> uploadResource(
-            @RequestParam("object") List<MultipartFile> files,
+            HttpServletRequest request,
             @RequestParam String path
     ) {
-        List<ResourceInfo> infos = fileStorageService.uploadFiles(path, files);
+        List<ResourceInfo> infos = uploadHandler.handle(request, path);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ResourceMapper.toResponseList(infos));

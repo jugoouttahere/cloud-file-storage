@@ -27,14 +27,19 @@ export async function sendUpload(files, updateDownloadTask, updateTask, uploadTa
         console.log("Отправляем файлы на бэк ");
 
         const response = await axios.post(API_FILES, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
+            params: {
+                path: currPath,
             },
             withCredentials: true,
             onUploadProgress: (progressEvent) => {
-                updateTask(uploadTask, "progress", "Загружаем... " + bytes(progressEvent.rate) + "/c");
+                updateTask(
+                    uploadTask,
+                    "progress",
+                    "Загружаем... " + bytes(progressEvent.rate) + "/c"
+                );
+
                 if (progressEvent.progress === 1) {
-                    updateTask(uploadTask, "progress", "Сохраняем в хранилище...")
+                    updateTask(uploadTask, "progress", "Сохраняем в хранилище...");
                 }
 
                 updateDownloadTask(uploadTask, progressEvent.progress * 100);

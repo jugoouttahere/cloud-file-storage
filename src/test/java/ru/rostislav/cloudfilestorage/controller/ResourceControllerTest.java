@@ -4,13 +4,13 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import ru.rostislav.cloudfilestorage.integration.MinioIntegrationTest;
 import ru.rostislav.cloudfilestorage.security.WithMockUserDetails;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +21,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
 public class ResourceControllerTest extends MinioIntegrationTest {
 
@@ -59,25 +60,31 @@ public class ResourceControllerTest extends MinioIntegrationTest {
     @WithMockUserDetails
     @Test
     void shouldUploadFiles() {
-        MockMultipartFile file1 = new MockMultipartFile(
-                "object",
-                "hello.txt",
-                "text/plain",
-                "Hello".getBytes(StandardCharsets.UTF_8)
-        );
+        String boundary = "TestBoundary123";
 
-        MockMultipartFile file2 = new MockMultipartFile(
-                "object",
-                "world.txt",
-                "text/plain",
-                "World".getBytes(StandardCharsets.UTF_8)
-        );
+        String body = """
+                --TestBoundary123\r
+                Content-Disposition: form-data; name="object"; filename="hello.txt"\r
+                Content-Type: text/plain\r
+                \r
+                Hello\r
+                --TestBoundary123\r
+                Content-Disposition: form-data; name="object"; filename="world.txt"\r
+                Content-Type: text/plain\r
+                \r
+                World\r
+                --TestBoundary123--\r
+                """;
 
         mockMvc.perform(
-                        multipart("/api/resource")
-                                .file(file1)
-                                .file(file2)
+                        post("/api/resource")
                                 .param("path", "storage/")
+                                .contentType(
+                                        MediaType.parseMediaType(
+                                                "multipart/form-data; boundary=" + boundary
+                                        )
+                                )
+                                .content(body.getBytes(StandardCharsets.UTF_8))
                 )
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$", hasSize(2)))
@@ -154,10 +161,14 @@ public class ResourceControllerTest extends MinioIntegrationTest {
         putObject("folder/file2.txt", "World");
         putObject("folder/inner/file3.txt", "MinIO");
 
-        MvcResult result = mockMvc.perform(
+        MvcResult asyncResult = mockMvc.perform(
                         get("/api/resource/download")
                                 .param("path", "folder/")
                 )
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        MvcResult result = mockMvc.perform(asyncDispatch(asyncResult))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM))
                 .andReturn();
@@ -172,17 +183,17 @@ public class ResourceControllerTest extends MinioIntegrationTest {
             ZipEntry entry;
 
             while ((entry = zipInputStream.getNextEntry()) != null) {
-                String content = new String(
-                        zipInputStream.readAllBytes(),
-                        StandardCharsets.UTF_8
-                );
+                ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-                files.put(entry.getName(), content);
+                zipInputStream.transferTo(output);
+
+                files.put(entry.getName(), output.toString(StandardCharsets.UTF_8));
+
+                zipInputStream.closeEntry();
             }
         }
 
         assertEquals(3, files.size());
-
         assertEquals("Hello", files.get("file1.txt"));
         assertEquals("World", files.get("file2.txt"));
         assertEquals("MinIO", files.get("inner/file3.txt"));

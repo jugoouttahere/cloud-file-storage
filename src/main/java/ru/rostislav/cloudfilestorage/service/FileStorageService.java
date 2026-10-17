@@ -4,8 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import ru.rostislav.cloudfilestorage.dto.ArchiveEntry;
+import ru.rostislav.cloudfilestorage.dto.resource.DownloadResult;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceInfo;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceType;
 import ru.rostislav.cloudfilestorage.dto.storage.StorageObject;
@@ -13,11 +14,14 @@ import ru.rostislav.cloudfilestorage.exception.EmptyFileException;
 import ru.rostislav.cloudfilestorage.exception.InvalidPathException;
 import ru.rostislav.cloudfilestorage.exception.minio.ObjectAlreadyExistsException;
 import ru.rostislav.cloudfilestorage.exception.minio.ObjectNotFoundException;
+import ru.rostislav.cloudfilestorage.exception.minio.ObjectOperationException;
 import ru.rostislav.cloudfilestorage.security.UserDetailsImpl;
 import ru.rostislav.cloudfilestorage.util.PathUtil;
 import ru.rostislav.cloudfilestorage.util.PathValidator;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.PushbackInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,22 +32,28 @@ public class FileStorageService {
     private final MinioService minioService;
     private final ArchiveService archiveService;
 
-    public List<ResourceInfo> uploadFiles(String path, List<MultipartFile> files) {
+    public ResourceInfo uploadFile(String path, String filename,
+                                   String contentType, InputStream in) {
         validateFolderPath(path);
         String normalizedPath = PathUtil.normalizeFolderPath(path);
-        List<ResourceInfo> infoList = new ArrayList<>();
-        for (MultipartFile file : files) {
-            String filename = file.getOriginalFilename();
-            validateFilename(filename);
-            if (file.isEmpty()) {
+        validateFilename(filename);
+
+        String fullPath = normalizedPath + filename;
+        checkObjectNotExists(fullPath);
+
+        PushbackInputStream pushback = new PushbackInputStream(in, 1);
+        try {
+            int first = pushback.read();
+            if (first == -1) {
                 throw new EmptyFileException(filename);
             }
-            String fullPath = normalizedPath + filename;
-            checkObjectNotExists(fullPath);
-            minioService.putObject(file, PathUtil.getStoragePath(fullPath, getUserId()));
-            infoList.add(getResourceInfo(fullPath));
+            pushback.unread(first);
+        } catch (IOException e) {
+            throw new ObjectOperationException(fullPath, "upload", e);
         }
-        return infoList;
+
+        minioService.putObject(pushback, contentType, PathUtil.getStoragePath(fullPath, getUserId()));
+        return getResourceInfo(fullPath);
     }
 
     public ResourceInfo createEmptyFolder(String folderName) {
@@ -103,52 +113,68 @@ public class FileStorageService {
         return getResourceInfo(dest);
     }
 
-    public InputStream downloadFile(String objectKey) {
+    public StreamingResponseBody downloadFile(String objectKey) {
         validatePath(objectKey);
         checkObjectExists(objectKey);
-        return minioService.getObject(PathUtil.getStoragePath(objectKey, getUserId()));
+        String storagePath = PathUtil.getStoragePath(objectKey, getUserId());
+        return out -> {
+            try (InputStream in = minioService.getObject(storagePath)) {
+                in.transferTo(out);
+            }
+        };
     }
 
-    public InputStream downloadFolder(String folderKey) {
+    public StreamingResponseBody downloadFolder(String folderKey) {
         validateFolderPath(folderKey);
         String normalizedFolderKey = PathUtil.normalizeFolderPath(folderKey);
         checkFolderExists(normalizedFolderKey);
 
+        Long userId = getUserId();
         List<ArchiveEntry> entries = new ArrayList<>();
 
-        for (StorageObject object : minioService.getObjects(PathUtil.getStoragePath(normalizedFolderKey, getUserId()), true)) {
-            String objectKey = PathUtil.removeUserRootPath(object.objectKey(), getUserId());
+        for (StorageObject object : minioService.getObjects(PathUtil.getStoragePath(normalizedFolderKey, userId), true)) {
+            String objectKey = PathUtil.removeUserRootPath(object.objectKey(), userId);
             if (objectKey.equals(normalizedFolderKey)) {
                 continue;
             }
+
             String relativePath = objectKey.substring(normalizedFolderKey.length());
+            String storagePath = PathUtil.getStoragePath(objectKey, userId);
 
-            if (object.type() == ResourceType.FILE) {
-                entries.add(new ArchiveEntry(
-                        relativePath,
-                        object.type(),
-                        minioService.getObject(PathUtil.getStoragePath(objectKey, getUserId()))
-                ));
-            }
-
-            if (object.type() == ResourceType.DIRECTORY) {
-                entries.add(new ArchiveEntry(
-                        relativePath,
-                        object.type(),
-                        null
-                ));
-            }
+            entries.add(new ArchiveEntry(
+                    relativePath,
+                    object.type(),
+                    object.type() == ResourceType.FILE
+                            ? () -> minioService.getObject(storagePath)
+                            : null
+            ));
 
         }
-        return archiveService.createZip(entries);
+        return out -> archiveService.writeToZip(entries, out);
     }
 
-    public InputStream downloadResource(String path) {
-        if (PathValidator.isFolderPath(path)) {
-            return downloadFolder(path);
-        } else {
-            return downloadFile(path);
+    public DownloadResult downloadResource(String path) {
+        validatePath(path);
+        if (path.isEmpty()) {
+            throw new InvalidPathException(path);
         }
+
+        boolean isFolder = PathValidator.isFolderPath(path);
+
+        StreamingResponseBody body = isFolder
+                ? downloadFolder(path)
+                : downloadFile(path);
+
+        return new DownloadResult(buildDownloadName(path, isFolder), body);
+    }
+
+    private String buildDownloadName(String path, boolean isFolder) {
+        String trimmed = isFolder
+                ? path.substring(0, path.length() - 1)
+                : path;
+
+        String name = trimmed.substring(trimmed.lastIndexOf('/') + 1);
+        return isFolder ? name + ".zip" : name;
     }
 
     public void deleteResource(String path) {

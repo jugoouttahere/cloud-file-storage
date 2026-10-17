@@ -23,22 +23,17 @@ public class MinioService {
 
     private final MinioClient minioClient;
     private final MinioProperties properties;
-    private final String noKey = "NoSuchKey";
+    private static final String noKey = "NoSuchKey";
 
-    public void putObject(MultipartFile file, String objectKey) {
+    public void putObject(InputStream in, String contentType, String objectKey) {
         try {
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(properties.getBucket())
                             .object(objectKey)
-                            .stream(
-                                    file.getInputStream(),
-                                    file.getSize(),
-                                    -1
-                            )
-                            .contentType(file.getContentType())
-                            .build()
-            );
+                            .stream(in, -1, 10 * 1024 * 1024)   // размер неизвестен, часть 10 МБ
+                            .contentType(contentType)
+                            .build());
         } catch (Exception e) {
             throw new ObjectOperationException(objectKey, "put", e);
         }

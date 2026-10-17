@@ -4,9 +4,8 @@ import org.springframework.stereotype.Service;
 import ru.rostislav.cloudfilestorage.dto.ArchiveEntry;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceType;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -14,25 +13,22 @@ import java.util.zip.ZipOutputStream;
 @Service
 public class ArchiveService {
 
-    public InputStream createZip(List<ArchiveEntry> entries) {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+    public void writeToZip(List<ArchiveEntry> entries, OutputStream out) {
+        try (ZipOutputStream zip = new ZipOutputStream(out)) {
 
             for (ArchiveEntry entry : entries) {
-                ZipEntry zipEntry = new ZipEntry(entry.path());
-                zipOutputStream.putNextEntry(zipEntry);
+                zip.putNextEntry(new ZipEntry(entry.path()));
 
                 if (entry.type() == ResourceType.FILE) {
-                    try (InputStream inputStream = entry.content()) {
-                        inputStream.transferTo(zipOutputStream);
+                    try (InputStream in = entry.content().get()) {
+                        in.transferTo(zip);
                     }
                 }
-                zipOutputStream.closeEntry();
+                zip.closeEntry();
             }
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create ZIP archive", e);
+            throw new RuntimeException("Failed to write to ZIP archive", e);
         }
-        return new ByteArrayInputStream(outputStream.toByteArray());
     }
 }
