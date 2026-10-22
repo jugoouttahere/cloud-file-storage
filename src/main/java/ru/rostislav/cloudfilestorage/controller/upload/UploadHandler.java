@@ -4,7 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
 import org.springframework.stereotype.Component;
-import ru.rostislav.cloudfilestorage.dto.resource.ResourceInfo;
+import ru.rostislav.cloudfilestorage.dto.resource.ResourceResponse;
 import ru.rostislav.cloudfilestorage.exception.InvalidPathException;
 import ru.rostislav.cloudfilestorage.exception.minio.ObjectOperationException;
 import ru.rostislav.cloudfilestorage.service.FileStorageService;
@@ -20,12 +20,12 @@ public class UploadHandler {
 
     private final FileStorageService fileStorageService;
 
-    public List<ResourceInfo> handle(HttpServletRequest request, String path) {
+    public List<ResourceResponse> handle(HttpServletRequest request, String path) {
         if (!JakartaServletFileUpload.isMultipartContent(request)) {
             throw new InvalidPathException(path);
         }
 
-        List<ResourceInfo> infos = new ArrayList<>();
+        var infos = new ArrayList<ResourceResponse>();
         var upload = new JakartaServletFileUpload<>();
 
         try {

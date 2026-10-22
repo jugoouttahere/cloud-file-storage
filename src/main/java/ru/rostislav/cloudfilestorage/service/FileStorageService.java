@@ -8,6 +8,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import ru.rostislav.cloudfilestorage.dto.ArchiveEntry;
 import ru.rostislav.cloudfilestorage.dto.resource.DownloadResult;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceInfo;
+import ru.rostislav.cloudfilestorage.dto.resource.ResourceResponse;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceType;
 import ru.rostislav.cloudfilestorage.dto.storage.StorageObject;
 import ru.rostislav.cloudfilestorage.exception.EmptyFileException;
@@ -15,6 +16,7 @@ import ru.rostislav.cloudfilestorage.exception.InvalidPathException;
 import ru.rostislav.cloudfilestorage.exception.minio.ObjectAlreadyExistsException;
 import ru.rostislav.cloudfilestorage.exception.minio.ObjectNotFoundException;
 import ru.rostislav.cloudfilestorage.exception.minio.ObjectOperationException;
+import ru.rostislav.cloudfilestorage.mapper.ResourceMapper;
 import ru.rostislav.cloudfilestorage.security.UserDetailsImpl;
 import ru.rostislav.cloudfilestorage.util.PathUtil;
 import ru.rostislav.cloudfilestorage.util.PathValidator;
@@ -32,7 +34,7 @@ public class FileStorageService {
     private final MinioService minioService;
     private final ArchiveService archiveService;
 
-    public ResourceInfo uploadFile(String path, String filename,
+    public ResourceResponse uploadFile(String path, String filename,
                                    String contentType, InputStream in) {
         validateFolderPath(path);
         String normalizedPath = PathUtil.normalizeFolderPath(path);
@@ -56,7 +58,7 @@ public class FileStorageService {
         return getResourceInfo(fullPath);
     }
 
-    public ResourceInfo createEmptyFolder(String folderName) {
+    public ResourceResponse createEmptyFolder(String folderName) {
         validateFolderPath(folderName);
         String normalizedFolderKey = PathUtil.normalizeFolderPath(folderName);
         checkParentFolderExist(normalizedFolderKey);
@@ -104,7 +106,7 @@ public class FileStorageService {
         }
     }
 
-    public ResourceInfo moveResource(String source, String dest) {
+    public ResourceResponse moveResource(String source, String dest) {
         if (source.endsWith("/")) {
             renameFolder(source, dest);
         } else {
@@ -200,7 +202,7 @@ public class FileStorageService {
         }
     }
 
-    public List<ResourceInfo> getDirectoryContent(String path) {
+    public List<ResourceResponse> getDirectoryContent(String path) {
         validateFolderPath(path);
         String normalizedPath = PathUtil.normalizeFolderPath(path);
         checkFolderExists(normalizedPath);
@@ -235,18 +237,18 @@ public class FileStorageService {
             }
         }
 
-        return infos;
+        return ResourceMapper.toResponseList(infos);
     }
 
-    public ResourceInfo getResourceInfo(String path) {
+    public ResourceResponse getResourceInfo(String path) {
         if (PathValidator.isFolderPath(path)) {
-            return getFolderInfo(path);
+            return ResourceMapper.toResponse(getFolderInfo(path));
         } else {
-            return getFileInfo(path);
+            return ResourceMapper.toResponse(getFileInfo(path));
         }
     }
 
-    public List<ResourceInfo> searchResource(String query) {
+    public List<ResourceResponse> searchResource(String query) {
         List<StorageObject> objects = minioService.getObjects(PathUtil.getStoragePath("", getUserId()), true);
         List<ResourceInfo> results = new ArrayList<>();
         for (StorageObject object : objects) {
@@ -278,7 +280,7 @@ public class FileStorageService {
                 }
             }
         }
-        return results;
+        return ResourceMapper.toResponseList(results);
     }
 
     private ResourceInfo getFileInfo(String path) {

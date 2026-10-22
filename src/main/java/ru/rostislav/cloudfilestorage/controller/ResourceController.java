@@ -7,9 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import ru.rostislav.cloudfilestorage.controller.upload.UploadHandler;
 import ru.rostislav.cloudfilestorage.dto.resource.DownloadResult;
-import ru.rostislav.cloudfilestorage.dto.resource.ResourceInfo;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceResponse;
-import ru.rostislav.cloudfilestorage.mapper.ResourceMapper;
 import ru.rostislav.cloudfilestorage.service.FileStorageService;
 
 import java.nio.charset.StandardCharsets;
@@ -28,8 +26,7 @@ public class ResourceController {
     public ResourceResponse getResourceInfo(
             @RequestParam String path
     ) {
-        ResourceInfo info = fileStorageService.getResourceInfo(path);
-        return ResourceMapper.toResponse(info);
+        return fileStorageService.getResourceInfo(path);
     }
 
     @DeleteMapping
@@ -61,8 +58,7 @@ public class ResourceController {
             @RequestParam String from,
             @RequestParam String to
     ) {
-        ResourceInfo info = fileStorageService.moveResource(from, to);
-        return ResourceMapper.toResponse(info);
+        return fileStorageService.moveResource(from, to);
     }
 
     @GetMapping("/search")
@@ -70,19 +66,16 @@ public class ResourceController {
     public List<ResourceResponse> searchResource(
             @RequestParam String query
     ) {
-        List<ResourceInfo> infos = fileStorageService.searchResource(query);
-        return ResourceMapper.toResponseList(infos);
+        return fileStorageService.searchResource(query);
     }
 
     @PostMapping
-    public ResponseEntity<List<ResourceResponse>> uploadResource(
+    @ResponseStatus(HttpStatus.CREATED)
+    public List<ResourceResponse> uploadResource(
             HttpServletRequest request,
             @RequestParam String path
     ) {
-        List<ResourceInfo> infos = uploadHandler.handle(request, path);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ResourceMapper.toResponseList(infos));
+        return uploadHandler.handle(request, path);
     }
 
 }

@@ -6,6 +6,7 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceInfo;
+import ru.rostislav.cloudfilestorage.dto.resource.ResourceResponse;
 import ru.rostislav.cloudfilestorage.dto.resource.ResourceType;
 import ru.rostislav.cloudfilestorage.exception.EmptyFileException;
 import ru.rostislav.cloudfilestorage.exception.minio.ObjectAlreadyExistsException;
@@ -87,7 +88,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     void shouldUploadFile() {
         String expected = "Hello MinIO";
 
-        ResourceInfo result = fileStorageService.uploadFile(
+        ResourceResponse result = fileStorageService.uploadFile(
                 "",
                 "hello.txt",
                 "text/plain",
@@ -121,7 +122,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
         String expectedFile1 = "Hello";
         String expectedFile2 = "World";
 
-        ResourceInfo result1 = fileStorageService.uploadFile(
+        ResourceResponse result1 = fileStorageService.uploadFile(
                 "",
                 "hello.txt",
                 "text/plain",
@@ -130,7 +131,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
                 )
         );
 
-        ResourceInfo result2 = fileStorageService.uploadFile(
+        ResourceResponse result2 = fileStorageService.uploadFile(
                 "",
                 "world.txt",
                 "text/plain",
@@ -167,12 +168,12 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
         assertTrue(isObjectExist("world.txt"));
 
         assertEquals(
-                new ResourceInfo("", "hello.txt", 5L, ResourceType.FILE),
+                new ResourceResponse("", "hello.txt", 5L, ResourceType.FILE),
                 result1
         );
 
         assertEquals(
-                new ResourceInfo("", "world.txt", 5L, ResourceType.FILE),
+                new ResourceResponse("", "world.txt", 5L, ResourceType.FILE),
                 result2
         );
     }
@@ -185,21 +186,21 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
         String expectedFile2 = "Test2";
         String expectedFile3 = "Test3";
 
-        ResourceInfo result1 = fileStorageService.uploadFile(
+        ResourceResponse result1 = fileStorageService.uploadFile(
                 "storage/",
                 "test1.txt",
                 "text/plain",
                 new ByteArrayInputStream(expectedFile1.getBytes(StandardCharsets.UTF_8))
         );
 
-        ResourceInfo result2 = fileStorageService.uploadFile(
+        ResourceResponse result2 = fileStorageService.uploadFile(
                 "storage/",
                 "folder/test2.txt",
                 "text/plain",
                 new ByteArrayInputStream(expectedFile2.getBytes(StandardCharsets.UTF_8))
         );
 
-        ResourceInfo result3 = fileStorageService.uploadFile(
+        ResourceResponse result3 = fileStorageService.uploadFile(
                 "storage/",
                 "folder/inner/test3.txt",
                 "text/plain",
@@ -207,17 +208,17 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
         );
 
         assertEquals(
-                new ResourceInfo("storage/", "test1.txt", 5L, ResourceType.FILE),
+                new ResourceResponse("storage/", "test1.txt", 5L, ResourceType.FILE),
                 result1
         );
 
         assertEquals(
-                new ResourceInfo("storage/folder/", "test2.txt", 5L, ResourceType.FILE),
+                new ResourceResponse("storage/folder/", "test2.txt", 5L, ResourceType.FILE),
                 result2
         );
 
         assertEquals(
-                new ResourceInfo("storage/folder/inner/", "test3.txt", 5L, ResourceType.FILE),
+                new ResourceResponse("storage/folder/inner/", "test3.txt", 5L, ResourceType.FILE),
                 result3
         );
 
@@ -264,7 +265,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     @WithMockUserDetails
     @Test
     void shouldCreateEmptyFolder() {
-        ResourceInfo result = fileStorageService.createEmptyFolder("folder/");
+        ResourceResponse result = fileStorageService.createEmptyFolder("folder/");
 
         assertTrue(isObjectExist("folder/"));
 
@@ -413,20 +414,20 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
         putObject("folder/file2.txt", "World");
         putObject("folder/inner/file3.txt", "MinIO");
 
-        List<ResourceInfo> result = fileStorageService.getDirectoryContent("folder/");
+        List<ResourceResponse> result = fileStorageService.getDirectoryContent("folder/");
 
         assertEquals(3, result.size());
 
         assertTrue(result.contains(
-                new ResourceInfo("folder/", "file1.txt", 5L, ResourceType.FILE)
+                new ResourceResponse("folder/", "file1.txt", 5L, ResourceType.FILE)
         ));
 
         assertTrue(result.contains(
-                new ResourceInfo("folder/", "file2.txt", 5L, ResourceType.FILE)
+                new ResourceResponse("folder/", "file2.txt", 5L, ResourceType.FILE)
         ));
 
         assertTrue(result.contains(
-                new ResourceInfo("folder/", "inner", null, ResourceType.DIRECTORY)
+                new ResourceResponse("folder/", "inner", null, ResourceType.DIRECTORY)
         ));
 
         assertFalse(result.stream()
@@ -438,10 +439,10 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     void shouldGetFileInfo() {
         putObject("folder/file.txt", "Hello");
 
-        ResourceInfo result = fileStorageService.getResourceInfo("folder/file.txt");
+        ResourceResponse result = fileStorageService.getResourceInfo("folder/file.txt");
 
         assertEquals(
-                new ResourceInfo(
+                new ResourceResponse(
                         "folder/",
                         "file.txt",
                         5L,
@@ -456,10 +457,10 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     void shouldGetFolderInfo() {
         putObject("folder/file.txt", "Hello");
 
-        ResourceInfo result = fileStorageService.getResourceInfo("folder/");
+        ResourceResponse result = fileStorageService.getResourceInfo("folder/");
 
         assertEquals(
-                new ResourceInfo(
+                new ResourceResponse(
                         "",
                         "folder",
                         null,
@@ -476,12 +477,12 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
         putObject("documents/photo.jpg", "Photo");
         putObject("documents/archive/report-old.txt", "Old report");
 
-        List<ResourceInfo> result = fileStorageService.searchResource("report");
+        List<ResourceResponse> result = fileStorageService.searchResource("report");
 
         assertEquals(2, result.size());
 
         assertTrue(result.contains(
-                new ResourceInfo(
+                new ResourceResponse(
                         "documents/",
                         "report.txt",
                         6L,
@@ -490,7 +491,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
         ));
 
         assertTrue(result.contains(
-                new ResourceInfo(
+                new ResourceResponse(
                         "documents/archive/",
                         "report-old.txt",
                         10L,
@@ -505,10 +506,10 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
         putFolder("documents/archive/");
         putObject("documents/archive/file.txt", "File");
 
-        List<ResourceInfo> result = fileStorageService.searchResource("archive");
+        List<ResourceResponse> result = fileStorageService.searchResource("archive");
 
         assertTrue(result.contains(
-                new ResourceInfo(
+                new ResourceResponse(
                         "documents/",
                         "archive",
                         null,
@@ -522,10 +523,10 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     void shouldSearchResourcesIgnoringCase() {
         putObject("documents/MyReport.txt", "Report");
 
-        List<ResourceInfo> result = fileStorageService.searchResource("MYREPORT");
+        List<ResourceResponse> result = fileStorageService.searchResource("MYREPORT");
 
         assertTrue(result.contains(
-                new ResourceInfo(
+                new ResourceResponse(
                         "documents/",
                         "MyReport.txt",
                         6L,
@@ -539,11 +540,11 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
     void shouldMoveFile() {
         putObject("folder/old.txt", "Hello");
 
-        ResourceInfo result =
+        ResourceResponse result =
                 fileStorageService.moveResource("folder/old.txt", "folder/new.txt");
 
         assertEquals(
-                new ResourceInfo(
+                new ResourceResponse(
                         "folder/",
                         "new.txt",
                         5L,
@@ -562,11 +563,11 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
         putObject("old-folder/file1.txt", "Hello");
         putObject("old-folder/inner/file2.txt", "World");
 
-        ResourceInfo result =
+        ResourceResponse result =
                 fileStorageService.moveResource("old-folder/", "new-folder/");
 
         assertEquals(
-                new ResourceInfo(
+                new ResourceResponse(
                         "",
                         "new-folder",
                         null,
@@ -624,14 +625,14 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
         putObject("documents/report", "Hello");
         putFolder("documents/report/");
 
-        ResourceInfo fileInfo =
+        ResourceResponse fileInfo =
                 fileStorageService.getResourceInfo("documents/report");
 
-        ResourceInfo folderInfo =
+        ResourceResponse folderInfo =
                 fileStorageService.getResourceInfo("documents/report/");
 
         assertEquals(
-                new ResourceInfo(
+                new ResourceResponse(
                         "documents/",
                         "report",
                         5L,
@@ -641,7 +642,7 @@ public class FileStorageServiceTest extends MinioIntegrationTest {
         );
 
         assertEquals(
-                new ResourceInfo(
+                new ResourceResponse(
                         "documents/",
                         "report",
                         null,
